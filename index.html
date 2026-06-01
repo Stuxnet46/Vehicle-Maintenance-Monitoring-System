@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>VMMS – Vehicle Maintenance Monitoring System</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --primary: #D90429;
+  --primary-dark: #a80320;
+  --secondary: #2B2D42;
+  --success: #06D6A0;
+  --warning: #FFB703;
+  --danger: #D00000;
+  --bg: #F0F2F5;
+  --card: #FFFFFF;
+  --text: #1a1c2e;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --nav-h: 78px;
+  --bottom-nav-h: 68px;
+}
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --text-muted: #9ca3af;
+  --border: #2d3148;
+  --secondary: #3d4060;
+  --shadow: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;max-width:100%;overflow-x:hidden;scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.35s,color 0.35s}
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:linear-gradient(135deg,#1a1c30 0%,#2B2D42 60%,#1e0a14 100%);
+  box-shadow:0 2px 24px rgba(0,0,0,0.45);
+  width:100%;overflow:hidden;
+}
+.topbar-main{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;height:54px;width:100%;
+}
+.topbar-brand{
+  display:flex;align-items:center;gap:9px;
+  flex:1;min-width:0;
+}
+/* Logo badge */
+.topbar-logo{
+  width:36px;height:36px;flex-shrink:0;
+  background:linear-gradient(135deg,#D90429 0%,#ff4d6d 100%);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 4px 14px rgba(217,4,41,0.55);
+  position:relative;overflow:hidden;
+  transition:box-shadow 0.3s,transform 0.3s;
+}
+.topbar-logo::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.22) 0%,transparent 60%);
+}
+.topbar-logo svg{width:20px;height:20px;z-index:1;position:relative;flex-shrink:0}
+/* Logo pulse on dark toggle */
+.topbar-logo.pulse{
+  animation:logoPulse 0.5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes logoPulse{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.22) rotate(-8deg)}
+  70%{transform:scale(0.92) rotate(4deg)}
+  100%{transform:scale(1) rotate(0deg)}
+}
+.topbar-text{min-width:0;flex:1}
+.topbar-title{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;
+  color:#fff;line-height:1.1;letter-spacing:0.6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.topbar-sub{
+  font-size:9px;color:rgba(255,255,255,0.4);
+  font-weight:500;letter-spacing:0.4px;white-space:nowrap;
+  margin-top:1px;
+}
+/* Actions row — always right-aligned, no wrap */
+.topbar-actions{
+  display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.btn-icon{
+  width:34px;height:34px;border:none;
+  background:rgba(255,255,255,0.07);
+  border-radius:9px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.22s;position:relative;overflow:hidden;
+  flex-shrink:0;
+}
+.btn-icon:hover{background:rgba(255,255,255,0.14);transform:translateY(-1px)}
+.btn-icon:active{transform:scale(0.88)}
+.btn-icon svg{
+  width:17px;height:17px;stroke:#fff;fill:none;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+  flex-shrink:0;transition:all 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── DARK TOGGLE — Animated Icon Swap ─────────────────── */
+.btn-icon.dark-toggle{
+  background:rgba(255,183,3,0.13);
+  border:1px solid rgba(255,183,3,0.22);
+  overflow:visible;
+}
+[data-theme="dark"] .btn-icon.dark-toggle{
+  background:rgba(139,92,246,0.2);
+  border:1px solid rgba(139,92,246,0.3);
+  box-shadow:0 0 12px rgba(139,92,246,0.25);
+}
+/* Sun/Moon icon container with flip animation */
+.dark-toggle-inner{
+  width:17px;height:17px;position:relative;
+  transition:transform 0.45s cubic-bezier(.34,1.56,.64,1);
+}
+.dark-toggle-inner.spinning{
+  animation:iconSpin 0.45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes iconSpin{
+  0%{transform:rotate(0deg) scale(1)}
+  40%{transform:rotate(200deg) scale(0.5)}
+  100%{transform:rotate(360deg) scale(1)}
+}
+.dark-toggle-inner svg{
+  position:absolute;inset:0;
+  width:17px;height:17px;
+  transition:opacity 0.3s,transform 0.35s;
+}
+.icon-sun{stroke:#FFB703!important;fill:rgba(255,183,3,0.15)}
+.icon-moon{stroke:#a78bfa!important;fill:rgba(139,92,246,0.15)}
+
+/* Export btn */
+.btn-icon.export-btn{
+  background:rgba(6,214,160,0.1);
+  border:1px solid rgba(6,214,160,0.18);
+}
+.btn-icon.export-btn svg{stroke:#06D6A0}
+.btn-icon.export-btn:hover{box-shadow:0 0 12px rgba(6,214,160,0.3)}
+
+/* Logout btn */
+.btn-icon.logout-btn{
+  background:rgba(217,4,41,0.15);
+  border:1px solid rgba(217,4,41,0.28);
+}
+.btn-icon.logout-btn svg{stroke:#ff6b8a}
+.btn-icon.logout-btn:hover{box-shadow:0 0 12px rgba(217,4,41,0.35)}
+
+/* ── MARQUEE ─────────────────────────────────────────────── */
+.topbar-marquee{
+  width:100%;height:22px;
+  background:rgba(0,0,0,0.28);
+  border-top:1px solid rgba(255,255,255,0.05);
+  overflow:hidden;display:flex;align-items:center;
+}
+.marquee-track{
+  display:flex;align-items:center;
+  white-space:nowrap;
+  animation:marqueeScroll 32s linear infinite;
+  font-size:9.5px;color:rgba(255,255,255,0.35);
+  letter-spacing:0.4px;
+}
+.marquee-track span{padding:0 8px}
+.marquee-sep{color:rgba(217,4,41,0.65)!important;font-size:8px;padding:0 4px!important}
+@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ══════════════════════════════════════════════════════════
+   BOTTOM NAV — Ultra Modern Glow 2025
+   ══════════════════════════════════════════════════════════ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:var(--bottom-nav-h);
+  background:rgba(248,250,252,0.92);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-top:1px solid rgba(0,0,0,0.06);
+  display:flex;align-items:stretch;
+  z-index:1000;
+  box-shadow:0 -6px 30px rgba(0,0,0,0.1),0 -1px 0 rgba(0,0,0,0.04);
+  padding:0 2px;
+}
+[data-theme="dark"] .bottom-nav{
+  background:rgba(15,17,28,0.94);
+  border-top:1px solid rgba(255,255,255,0.05);
+  box-shadow:0 -6px 30px rgba(0,0,0,0.55),0 -1px 0 rgba(255,255,255,0.03);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;cursor:pointer;border:none;background:none;
+  padding:6px 2px 7px;position:relative;outline:none;
+  transition:transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  -webkit-user-select:none;user-select:none;
+  min-width:0;
+}
+.nav-item:active{transform:scale(0.84)}
+
+/* ── Icon bubble ── */
+.nav-icon-wrap{
+  width:42px;height:30px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:14px;
+  position:relative;
+  transition:all 0.32s cubic-bezier(.34,1.56,.64,1);
+}
+.nav-icon-wrap svg{
+  width:21px;height:21px;
+  fill:none;stroke-width:1.75;
+  stroke-linecap:round;stroke-linejoin:round;
+  stroke:var(--text-muted);
+  transition:stroke 0.28s, filter 0.28s, transform 0.32s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── ACTIVE STATE — Red glow pill ── */
+.nav-item.active .nav-icon-wrap{
+  background:linear-gradient(135deg,
+    rgba(217,4,41,0.18) 0%,
+    rgba(217,4,41,0.08) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(217,4,41,0.15),
+    0 4px 18px rgba(217,4,41,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transform:translateY(-3px) scale(1.1);
+}
+.nav-item.active .nav-icon-wrap svg{
+  stroke:#D90429;
+  filter:
+    drop-shadow(0 0 4px rgba(217,4,41,0.7))
+    drop-shadow(0 0 10px rgba(217,4,41,0.4));
+  transform:scale(1.05);
+}
+.nav-item.active .nav-label{
+  color:#D90429;font-weight:700;
+  text-shadow:0 0 8px rgba(217,4,41,0.4);
+}
+
+/* ── Top glow bar ── */
+.nav-item.active::before{
+  content:'';
+  position:absolute;top:0;left:50%;
+  transform:translateX(-50%);
+  width:36px;height:3px;
+  background:linear-gradient(90deg,transparent,#D90429,#ff6b8a,#D90429,transparent);
+  border-radius:0 0 6px 6px;
+  box-shadow:0 0 12px rgba(217,4,41,0.8),0 0 24px rgba(217,4,41,0.3);
+  animation:glowBarIn 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes glowBarIn{
+  0%{width:0;opacity:0}
+  60%{width:44px}
+  100%{width:36px;opacity:1}
+}
+
+/* ── Hover (desktop) ── */
+@media(hover:hover){
+  .nav-item:not(.active):hover .nav-icon-wrap{
+    background:rgba(107,114,128,0.08);
+    transform:translateY(-1px);
+  }
+  .nav-item:not(.active):hover .nav-icon-wrap svg{stroke:var(--text)}
+  .nav-item:not(.active):hover .nav-label{color:var(--text)}
+}
+
+/* ── Label ── */
+.nav-label{
+  font-size:8.5px;font-weight:600;
+  letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--text-muted);line-height:1;
+  transition:color 0.25s, text-shadow 0.25s;
+  white-space:nowrap;
+}
+
+/* ── Notification dot ── */
+.badge-dot{
+  position:absolute;top:3px;right:calc(50% - 23px);
+  width:9px;height:9px;
+  background:radial-gradient(circle,#ff4757 0%,#D90429 100%);
+  border-radius:50%;border:2px solid var(--card);
+  box-shadow:0 0 0 0 rgba(217,4,41,0.5);
+  animation:dotRipple 2.2s ease-in-out infinite;
+}
+@keyframes dotRipple{
+  0%{box-shadow:0 0 0 0 rgba(217,4,41,0.6)}
+  60%{box-shadow:0 0 0 6px rgba(217,4,41,0)}
+  100%{box-shadow:0 0 0 0 rgba(217,4,41,0)}
+}
+
+/* MAIN */
+.main{margin-top:var(--nav-h);padding-bottom:calc(var(--bottom-nav-h) + 16px);min-height:calc(100vh - var(--nav-h))}
+.page{display:none;padding:20px 16px;animation:fadeIn 0.25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:20px}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--text);line-height:1}
+.page-sub{font-size:13px;color:var(--text-muted);margin-top:3px}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;border:1px solid var(--border)}
+.card+.card{margin-top:12px}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;border:1px solid var(--border);position:relative;overflow:hidden;cursor:default}
+.kpi-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:0.08}
+.kpi-card.blue::before{background:#3b82f6}
+.kpi-card.green::before{background:var(--success)}
+.kpi-card.yellow::before{background:var(--warning)}
+.kpi-card.red::before{background:var(--danger)}
+.kpi-card.purple::before{background:#8b5cf6}
+.kpi-icon{font-size:28px;margin-bottom:8px}
+.kpi-value{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;line-height:1;color:var(--text)}
+.kpi-label{font-size:11px;font-weight:500;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+.kpi-card.wide{grid-column:span 2}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-secondary{background:var(--secondary);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-warning{background:var(--warning);color:#1a1c2e}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.btn-full{width:100%}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+.form-control{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;transition:border-color 0.2s}
+.form-control:focus{outline:none;border-color:var(--primary);background:var(--card)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select.form-control{cursor:pointer}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg);color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(217,4,41,0.03)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.3px}
+.badge-success{background:rgba(6,214,160,0.15);color:#04a47c}
+.badge-warning{background:rgba(255,183,3,0.15);color:#c98a00}
+.badge-danger{background:rgba(208,0,0,0.12);color:var(--danger)}
+.badge-info{background:rgba(59,130,246,0.12);color:#2563eb}
+.badge-secondary{background:rgba(107,114,128,0.12);color:var(--text-muted)}
+
+/* SEARCH BAR */
+.search-bar{display:flex;gap:8px;margin-bottom:16px}
+.search-input{flex:1;padding:10px 14px 10px 38px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;transition:border-color 0.2s}
+.search-input:focus{outline:none;border-color:var(--primary)}
+.search-wrap{position:relative;flex:1}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:16px;pointer-events:none}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:24px 20px;max-height:90vh;overflow-y:auto;animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:20px;color:var(--text)}
+.modal-actions{display:flex;gap:8px;margin-top:20px}
+.modal-actions .btn{flex:1}
+
+/* REMINDER ITEMS */
+.reminder-item{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg);border-radius:12px;margin-bottom:8px;border-left:4px solid var(--border)}
+.reminder-item.danger{border-left-color:var(--danger);background:rgba(208,0,0,0.04)}
+.reminder-item.warning{border-left-color:var(--warning);background:rgba(255,183,3,0.04)}
+.reminder-item.success{border-left-color:var(--success);background:rgba(6,214,160,0.04)}
+.reminder-info{flex:1;min-width:0}
+.reminder-name{font-weight:600;font-size:14px;color:var(--text)}
+.reminder-detail{font-size:12px;color:var(--text-muted);margin-top:2px}
+.reminder-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.reminder-icon.red{background:rgba(208,0,0,0.12)}
+.reminder-icon.yellow{background:rgba(255,183,3,0.12)}
+.reminder-icon.green{background:rgba(6,214,160,0.12)}
+
+/* SECTION TITLE */
+.section-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title span{font-size:18px}
+
+/* HISTORY ITEM */
+.history-item{padding:14px;background:var(--bg);border-radius:12px;margin-bottom:8px}
+.history-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.history-title{font-weight:600;font-size:14px;color:var(--text)}
+.history-date{font-size:11px;color:var(--text-muted)}
+.history-meta{display:flex;gap:8px;flex-wrap:wrap}
+
+/* CHART CONTAINER */
+.chart-container{position:relative;height:200px;margin-top:10px}
+
+/* SETTINGS — Modern List Style */
+.settings-section-label{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+  color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;
+  margin-bottom:12px;
+}
+.settings-section-label svg{
+  width:14px;height:14px;flex-shrink:0;
+  fill:none;stroke:var(--text-muted);stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+
+/* Each row in settings */
+.setting-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--border);
+}
+.setting-item:last-child{border-bottom:none}
+
+/* Icon bubble — FIXED SIZE */
+.setting-icon-wrap{
+  width:36px;height:36px;
+  border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.setting-icon-wrap svg{
+  width:18px;height:18px;
+  fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;
+  flex-shrink:0;
+}
+
+.setting-content{flex:1;min-width:0}
+.setting-label{font-size:14px;font-weight:600;color:var(--text);line-height:1.2}
+.setting-desc{font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.3}
+
+/* Arrow chevron */
+.setting-arrow{
+  width:16px;height:16px;flex-shrink:0;
+  fill:none;stroke:var(--text-muted);stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+
+/* Setting button row (tappable) */
+.setting-btn{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:11px 0;background:none;border:none;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  transition:background 0.15s;border-radius:0;
+  text-align:left;
+}
+.setting-btn:last-child{border-bottom:none}
+.setting-btn:active{background:rgba(0,0,0,0.03)}
+[data-theme="dark"] .setting-btn:active{background:rgba(255,255,255,0.04)}
+.setting-btn.danger-btn .setting-label{color:var(--danger)}
+
+/* Modern toggle switch */
+.toggle-modern{
+  width:50px;height:28px;flex-shrink:0;
+  background:var(--border);border:none;border-radius:14px;
+  position:relative;cursor:pointer;
+  transition:background 0.28s cubic-bezier(.4,0,.2,1);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle-modern.on{background:linear-gradient(135deg,#D90429,#ff4d6d);box-shadow:0 0 12px rgba(217,4,41,0.35)}
+.toggle-thumb{
+  position:absolute;top:3px;left:3px;
+  width:22px;height:22px;
+  background:#fff;border-radius:50%;
+  box-shadow:0 1px 6px rgba(0,0,0,0.22);
+  display:flex;align-items:center;justify-content:center;
+  transition:left 0.28s cubic-bezier(.34,1.56,.64,1);
+}
+.toggle-modern.on .toggle-thumb{left:25px}
+.toggle-sun,.toggle-moon{width:12px;height:12px;position:absolute;transition:opacity 0.2s}
+.toggle-moon{opacity:1}.toggle-sun{opacity:0}
+.toggle-modern.on .toggle-moon{opacity:0}.toggle-modern.on .toggle-sun{opacity:1}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-icon{font-size:56px;margin-bottom:12px;opacity:0.4}
+.empty-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text-muted)}
+.empty-sub{font-size:13px;margin-top:6px}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--bottom-nav-h) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--secondary);color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:500;z-index:3000;opacity:0;transition:all 0.3s;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* VEHICLE CARD (mobile) */
+.vehicle-card{background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px;border:1.5px solid var(--border);position:relative}
+.vehicle-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.vehicle-plate{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--primary)}
+.vehicle-actions{display:flex;gap:6px}
+.vehicle-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.vehicle-meta-item{font-size:12px;color:var(--text-muted)}
+.vehicle-meta-item strong{color:var(--text);display:block;font-size:13px;font-weight:600}
+
+/* MAINTENANCE CARD */
+.maint-card{background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px;border-left:4px solid var(--border)}
+.maint-card.safe{border-left-color:var(--success)}
+.maint-card.soon{border-left-color:var(--warning)}
+.maint-card.overdue{border-left-color:var(--danger)}
+.maint-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.maint-title{font-weight:700;font-size:14px;color:var(--text)}
+.maint-vehicle{font-size:12px;color:var(--text-muted);margin-top:2px}
+.maint-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.maint-meta-item{background:var(--card);border-radius:8px;padding:8px;text-align:center}
+.maint-meta-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px}
+.maint-meta-value{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-top:2px}
+
+/* PROGRESS BAR */
+.progress{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-bar{height:100%;border-radius:3px;transition:width 0.5s ease}
+.progress-bar.safe{background:var(--success)}
+.progress-bar.soon{background:var(--warning)}
+.progress-bar.overdue{background:var(--danger)}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--bottom-nav-h) + 20px);right:20px;width:54px;height:54px;background:var(--primary);border-radius:16px;border:none;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(217,4,41,0.4);z-index:900;display:none;align-items:center;justify-content:center;transition:transform 0.2s;line-height:1}
+.fab:hover{transform:scale(1.05)}
+.fab.visible{display:flex}
+
+/* FILTER PILLS — 2-row wrap grid, no horizontal scroll */
+.stat-pills{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-bottom:14px;
+}
+.stat-pill{
+  padding:7px 4px;
+  border-radius:10px;
+  font-size:11px;font-weight:600;
+  cursor:pointer;
+  border:1.5px solid var(--border);
+  background:var(--card);
+  color:var(--text-muted);
+  transition:all 0.2s;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.stat-pill.active{
+  background:var(--primary);color:#fff;
+  border-color:var(--primary);
+  box-shadow:0 2px 10px rgba(217,4,41,0.3);
+}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* COST DISPLAY */
+.cost-display{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--primary)}
+.cost-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+
+/* ANALYSIS CARD */
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.analysis-card{background:var(--card);border-radius:var(--radius-sm);border:1px solid var(--border);padding:14px;text-align:center}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+@media(min-width:640px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .page{padding:24px 24px}
+  .modal{border-radius:var(--radius)}
+  .modal-overlay{align-items:center}
+}
+
+/* ============================================================
+   PIN LOCK SCREEN
+   ============================================================ */
+#pin-screen{
+  position:fixed;inset:0;z-index:9000;
+  background:linear-gradient(135deg,#0a0c18 0%,#131629 40%,#1a0508 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 20px;overflow:hidden;
+}
+#pin-screen::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 20%,rgba(217,4,41,0.18) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 40% at 80% 80%,rgba(43,45,66,0.4) 0%,transparent 60%);
+  pointer-events:none;
+}
+/* Animated grid lines */
+#pin-screen::after{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(217,4,41,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(217,4,41,0.06) 1px,transparent 1px);
+  background-size:40px 40px;
+  animation:gridMove 20s linear infinite;
+  pointer-events:none;
+}
+@keyframes gridMove{from{background-position:0 0}to{background-position:40px 40px}}
+
+.pin-glow-ring{
+  position:relative;width:110px;height:110px;margin-bottom:24px;
+}
+.pin-glow-ring svg{width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(217,4,41,0.6))}
+.pin-car-icon{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:42px;animation:carPulse 3s ease-in-out infinite;
+}
+@keyframes carPulse{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 8px rgba(217,4,41,0.4))}
+  50%{transform:scale(1.08);filter:drop-shadow(0 0 20px rgba(217,4,41,0.8))}
+}
+.pin-ring-animate{
+  animation:ringRotate 8s linear infinite;transform-origin:center;
+}
+@keyframes ringRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.pin-brand{text-align:center;margin-bottom:28px;position:relative;z-index:1}
+.pin-brand-title{
+  font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;
+  letter-spacing:2px;text-transform:uppercase;line-height:1.1;
+  text-shadow:0 0 30px rgba(217,4,41,0.5);
+}
+.pin-brand-tagline{
+  font-size:11px;color:rgba(255,255,255,0.45);margin-top:5px;
+  letter-spacing:0.8px;font-weight:400;
+}
+.pin-brand-divider{
+  width:50px;height:2px;background:linear-gradient(90deg,transparent,#D90429,transparent);
+  margin:10px auto;
+}
+
+.pin-card{
+  background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);
+  border:1px solid rgba(217,4,41,0.2);border-radius:20px;
+  padding:28px 24px;width:100%;max-width:360px;
+  position:relative;z-index:1;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.pin-label{
+  font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);
+  text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:14px;
+}
+.pin-input-wrap{position:relative;margin-bottom:16px}
+.pin-input{
+  width:100%;padding:14px 48px 14px 18px;
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:12px;color:#fff;
+  font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;
+  letter-spacing:12px;text-align:center;outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  caret-color:transparent;
+}
+.pin-input:focus{
+  border-color:rgba(217,4,41,0.6);
+  box-shadow:0 0 0 3px rgba(217,4,41,0.15),0 0 20px rgba(217,4,41,0.1);
+}
+.pin-input.shake{animation:shake 0.4s ease}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+.pin-eye{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:rgba(255,255,255,0.4);
+  cursor:pointer;font-size:20px;padding:4px;
+}
+.pin-eye:hover{color:rgba(255,255,255,0.7)}
+.pin-error{
+  color:#ff6b7a;font-size:12px;text-align:center;margin-bottom:12px;
+  min-height:18px;font-weight:500;
+  animation:fadeIn 0.2s ease;
+}
+.pin-dots{
+  display:flex;justify-content:center;gap:10px;margin-bottom:20px;
+}
+.pin-dot{
+  width:12px;height:12px;border-radius:50%;
+  background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);
+  transition:all 0.2s;
+}
+.pin-dot.filled{background:#D90429;border-color:#D90429;box-shadow:0 0 8px rgba(217,4,41,0.6)}
+
+.pin-submit{
+  width:100%;padding:14px;background:linear-gradient(135deg,#D90429,#a80320);
+  border:none;border-radius:12px;color:#fff;
+  font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(217,4,41,0.4);
+}
+.pin-submit:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(217,4,41,0.55)}
+.pin-submit:active{transform:translateY(0)}
+
+.pin-footer{
+  margin-top:24px;text-align:center;color:rgba(255,255,255,0.25);
+  font-size:11px;position:relative;z-index:1;
+}
+
+/* ============================================================
+   SPLASH SCREEN
+   ============================================================ */
+#splash-screen{
+  position:fixed;inset:0;z-index:8500;
+  background:linear-gradient(135deg,#0a0c18 0%,#131629 50%,#1a0508 100%);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:24px;
+}
+.splash-logo{font-size:64px;animation:splashBounce 1s ease-out}
+@keyframes splashBounce{
+  0%{transform:scale(0.5);opacity:0}
+  60%{transform:scale(1.15)}
+  100%{transform:scale(1);opacity:1}
+}
+.splash-title{
+  font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
+  color:#fff;text-align:center;letter-spacing:2px;
+}
+.splash-msg{color:rgba(255,255,255,0.5);font-size:13px;text-align:center}
+.splash-bar{width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
+.splash-progress{height:100%;background:linear-gradient(90deg,#D90429,#ff6b8a);border-radius:2px;animation:splashLoad 1.6s ease-out forwards}
+@keyframes splashLoad{from{width:0}to{width:100%}}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media(max-width:360px){
+  .topbar-title{font-size:13px}
+  .topbar-logo{width:32px;height:32px}
+  .btn-icon{width:30px;height:30px}
+  .btn-icon svg{width:15px;height:15px}
+  .topbar-actions{gap:4px}
+  .nav-icon-wrap{width:36px;height:27px}
+  .nav-icon-wrap svg{width:18px;height:18px}
+  .nav-label{font-size:7.5px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+}
+@media(min-width:480px){
+  .topbar-main{padding:0 16px}
+  .topbar-logo{width:38px;height:38px}
+  .topbar-logo svg{width:22px;height:22px}
+  .btn-icon{width:36px;height:36px}
+}
+@media(min-width:640px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .page{padding:24px 24px}
+  .modal{border-radius:var(--radius)}
+  .modal-overlay{align-items:center}
+  .topbar-main{padding:0 20px}
+}
+@media(min-width:900px){
+  .kpi-grid{grid-template-columns:repeat(5,1fr)}
+  .kpi-card.wide{grid-column:span 1}
+  .page{max-width:860px;margin:0 auto}
+}
+
+/* Modal overrides */
+#modal-logout .modal{background:var(--card)}
+#modal-logout .modal-title{color:var(--text)}
+
+/* Change PIN */
+.pin-change-wrap{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+
+<!-- PIN LOCK SCREEN -->
+<div id="pin-screen">
+  <div class="pin-glow-ring" style="position:relative;z-index:1">
+    <svg viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="55" cy="55" r="52" stroke="rgba(217,4,41,0.2)" stroke-width="1.5"/>
+      <circle cx="55" cy="55" r="44" stroke="rgba(217,4,41,0.1)" stroke-width="1"/>
+      <g class="pin-ring-animate">
+        <circle cx="55" cy="55" r="52" stroke="url(#rg)" stroke-width="2" stroke-dasharray="80 250" stroke-linecap="round"/>
+      </g>
+      <defs>
+        <linearGradient id="rg" x1="0" y1="0" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#D90429"/><stop offset="100%" stop-color="#ff6b8a"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="pin-car-icon">🚗</div>
+  </div>
+  <div class="pin-brand" style="position:relative;z-index:1">
+    <div class="pin-brand-title">Vehicle Maintenance<br>Monitoring System</div>
+    <div class="pin-brand-divider"></div>
+    <div class="pin-brand-tagline">Monitor Perawatan Kendaraan Secara Tepat Waktu</div>
+  </div>
+  <div class="pin-card">
+    <div class="pin-label">🔐 Masukkan PIN Anda</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+      <div class="pin-dot" id="dot-4"></div><div class="pin-dot" id="dot-5"></div>
+    </div>
+    <div class="pin-input-wrap">
+      <input type="password" class="pin-input" id="pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" autocomplete="off" oninput="onPinInput(this)" onkeydown="if(event.key==='Enter')submitPin()">
+      <button class="pin-eye" id="pin-eye-btn" onclick="togglePinVisibility()" type="button">👁️</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <button class="pin-submit" onclick="submitPin()">🔓 MASUK</button>
+  </div>
+  <div class="pin-footer">© Gentara Anugrah &nbsp;•&nbsp; Semua hak cipta dilindungi.</div>
+</div>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-screen">
+  <div class="splash-logo">🚗</div>
+  <div class="splash-title">VEHICLE MAINTENANCE<br>MONITORING SYSTEM</div>
+  <div class="splash-msg">Memuat Vehicle Maintenance Monitoring System...</div>
+  <div class="splash-bar"><div class="splash-progress" id="splash-bar"></div></div>
+</div>
+
+<!-- APP WRAPPER -->
+<div id="app-wrapper">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="topbar-brand">
+      <div class="topbar-logo" id="topbar-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h1l2-3h10l2 3h1a2 2 0 012 2v6a2 2 0 01-2 2h-2"/>
+          <circle cx="7.5" cy="17.5" r="2.5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.9)"/>
+          <circle cx="16.5" cy="17.5" r="2.5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.9)"/>
+          <path d="M7.5 10.5h9" stroke-width="1.6"/>
+        </svg>
+      </div>
+      <div class="topbar-text">
+        <div class="topbar-title">VMMS</div>
+        <div class="topbar-sub">Vehicle Maintenance</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-icon dark-toggle" onclick="toggleDark()" title="Ganti Tema" id="dark-toggle-btn" aria-label="Toggle Tema">
+        <div class="dark-toggle-inner" id="dark-toggle-inner">
+          <svg class="icon-sun" id="icon-sun" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0;position:absolute">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="icon-moon" id="icon-moon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+          </svg>
+        </div>
+      </button>
+      <button class="btn-icon export-btn" onclick="showExportMenu()" title="Export Data" aria-label="Export">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </button>
+      <button class="btn-icon logout-btn" onclick="confirmLogout()" title="Keluar" aria-label="Logout">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="topbar-marquee">
+    <div class="marquee-track">
+      <span>© Gentara Anugrah</span><span class="marquee-sep">◆</span>
+      <span>Vehicle Maintenance Monitoring System</span><span class="marquee-sep">◆</span>
+      <span>Monitor Perawatan Kendaraan Secara Tepat Waktu</span><span class="marquee-sep">◆</span>
+      <span>© Gentara Anugrah</span><span class="marquee-sep">◆</span>
+      <span>Vehicle Maintenance Monitoring System</span><span class="marquee-sep">◆</span>
+      <span>Monitor Perawatan Kendaraan Secara Tepat Waktu</span><span class="marquee-sep">◆</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <section id="page-dashboard" class="page active">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="dash-date"></div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="section-title"><span>🔴</span> Terlambat</div>
+    <div id="dash-overdue-list"></div>
+
+    <div class="section-title" style="margin-top:20px"><span>⚠️</span> Mendekati Jadwal</div>
+    <div id="dash-soon-list"></div>
+
+    <div class="section-title" style="margin-top:20px"><span>📅</span> Perawatan Bulan Ini</div>
+    <div id="dash-month-list"></div>
+  </section>
+
+  <!-- DATA KENDARAAN -->
+  <section id="page-kendaraan" class="page">
+    <div class="page-header">
+      <div class="page-title">Data Kendaraan</div>
+      <div class="page-sub">Kelola armada kendaraan Anda</div>
+    </div>
+    <div class="search-bar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Cari plat / nama / merk..." id="vehicle-search" oninput="renderVehicles()">
+      </div>
+    </div>
+    <div id="vehicle-list"></div>
+    <div style="height:16px"></div>
+  </section>
+
+  <!-- JADWAL PERAWATAN -->
+  <section id="page-jadwal" class="page">
+    <div class="page-header">
+      <div class="page-title">Jadwal Perawatan</div>
+      <div class="page-sub">Monitor status perawatan</div>
+    </div>
+    <div class="stat-pills" id="jadwal-filter-pills">
+      <div class="stat-pill active" onclick="filterJadwal('all',this)">Semua</div>
+      <div class="stat-pill" onclick="filterJadwal('overdue',this)">🔴 Terlambat</div>
+      <div class="stat-pill" onclick="filterJadwal('soon',this)">⚠️ Mendekati</div>
+      <div class="stat-pill" onclick="filterJadwal('safe',this)">✅ Aman</div>
+      <div class="stat-pill" onclick="filterJadwal('Oli Mesin',this)">🛢️ Oli Mesin</div>
+      <div class="stat-pill" onclick="filterJadwal('Oli Gardan',this)">⚙️ Oli Gardan</div>
+      <div class="stat-pill" onclick="filterJadwal('Service Complete',this)">🔧 Service</div>
+      <div class="stat-pill" onclick="filterJadwal('Nitrogen Ban',this)">🔵 Nitrogen</div>
+    </div>
+    <div class="search-bar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Cari kendaraan / jenis..." id="jadwal-search" oninput="renderJadwal()">
+      </div>
+    </div>
+    <div id="jadwal-list"></div>
+    <div style="height:16px"></div>
+  </section>
+
+  <!-- REMINDER -->
+  <section id="page-reminder" class="page">
+    <div class="page-header">
+      <div class="page-title">Reminder Center</div>
+      <div class="page-sub">Pantau jadwal perawatan</div>
+    </div>
+
+    <div class="section-title"><span>🔴</span> Terlambat</div>
+    <div id="reminder-overdue"></div>
+
+    <div class="divider"></div>
+    <div class="section-title"><span>📅</span> Hari Ini</div>
+    <div id="reminder-today"></div>
+
+    <div class="divider"></div>
+    <div class="section-title"><span>⏰</span> 7 Hari Kedepan</div>
+    <div id="reminder-week"></div>
+  </section>
+
+  <!-- HISTORI -->
+  <section id="page-histori" class="page">
+    <div class="page-header">
+      <div class="page-title">Histori Perawatan</div>
+      <div class="page-sub">Riwayat semua servis</div>
+    </div>
+
+    <!-- ANALISIS -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title"><span>📊</span> Analisis</div>
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <div class="cost-label">Biaya Tahun Ini</div>
+          <div class="cost-display" id="cost-year">Rp 0</div>
+        </div>
+        <div class="analysis-card">
+          <div class="cost-label">Biaya Bulan Ini</div>
+          <div class="cost-display" id="cost-month">Rp 0</div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top:4px;font-size:13px"><span>🏆</span> Terbanyak Dikerjakan</div>
+      <div id="top-service" style="font-size:13px;color:var(--text-muted)">-</div>
+      <div class="chart-container"><canvas id="chart-service"></canvas></div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="search-wrap" style="margin-bottom:8px">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" style="width:100%" placeholder="Cari histori..." id="history-search" oninput="renderHistory()">
+      </div>
+      <select class="form-control" id="history-filter" onchange="renderHistory()">
+        <option value="">— Semua Jenis Perawatan —</option>
+        <option>Oli Mesin</option>
+        <option>Oli Gardan</option>
+        <option>Service Complete</option>
+        <option>Nitrogen Ban</option>
+      </select>
+    </div>
+    <div id="history-list"></div>
+    <div style="height:16px"></div>
+  </section>
+
+  <!-- PENGATURAN -->
+  <section id="page-pengaturan" class="page">
+    <div class="page-header">
+      <div class="page-title">Pengaturan</div>
+      <div class="page-sub">Konfigurasi aplikasi</div>
+    </div>
+
+    <!-- Tampilan -->
+    <div class="card">
+      <div class="settings-section-label">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Tampilan
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-icon-wrap" style="background:rgba(99,102,241,0.12)">
+          <svg viewBox="0 0 24 24" stroke="#818cf8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label">Dark Mode</div>
+          <div class="setting-desc">Tema gelap untuk malam hari</div>
+        </div>
+        <button class="toggle-modern" id="toggle-dark" onclick="toggleDark()">
+          <span class="toggle-thumb">
+            <svg class="toggle-sun" viewBox="0 0 24 24" stroke="#FFB703" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2"/></svg>
+            <svg class="toggle-moon" viewBox="0 0 24 24" stroke="#818cf8" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </span>
+        </button>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-icon-wrap" style="background:rgba(255,183,3,0.12)">
+          <svg viewBox="0 0 24 24" stroke="#FFB703"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label">Peringatan Mendekati</div>
+          <div class="setting-desc">Hari sebelum jatuh tempo diperingatkan</div>
+        </div>
+        <select class="form-control" style="width:72px;padding:6px 8px;font-size:13px;flex-shrink:0" id="warning-days" onchange="saveSettings()">
+          <option value="7">7 hr</option>
+          <option value="14">14 hr</option>
+          <option value="30">30 hr</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Export & Backup -->
+    <div class="card" style="margin-top:12px">
+      <div class="settings-section-label">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Export & Backup
+      </div>
+
+      <button class="setting-btn" onclick="exportCSV()">
+        <div class="setting-icon-wrap" style="background:rgba(6,214,160,0.12)">
+          <svg viewBox="0 0 24 24" stroke="#06D6A0">
+            <rect x="3" y="3" width="18" height="18" rx="3" fill="none"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label">Export CSV</div>
+          <div class="setting-desc">Download data histori perawatan</div>
+        </div>
+        <svg class="setting-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <button class="setting-btn" onclick="exportJSON()">
+        <div class="setting-icon-wrap" style="background:rgba(59,130,246,0.12)">
+          <svg viewBox="0 0 24 24" stroke="#3b82f6">
+            <path d="M12 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" fill="none"/>
+            <polyline points="14 2 14 8 20 8" fill="none"/>
+            <path d="M8 13h8M8 17h5"/>
+          </svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label">Backup JSON</div>
+          <div class="setting-desc">Simpan semua data ke file</div>
+        </div>
+        <svg class="setting-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <button class="setting-btn" onclick="importJSON()">
+        <div class="setting-icon-wrap" style="background:rgba(139,92,246,0.12)">
+          <svg viewBox="0 0 24 24" stroke="#8b5cf6">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" fill="none"/>
+            <polyline points="7 10 12 15 17 10" fill="none"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label">Restore JSON</div>
+          <div class="setting-desc">Pulihkan data dari backup</div>
+        </div>
+        <svg class="setting-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- Keamanan / PIN -->
+    <div class="card" style="margin-top:12px">
+      <div class="settings-section-label">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" fill="none"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Keamanan
+      </div>
+
+      <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:12px;padding-bottom:4px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="setting-icon-wrap" style="background:rgba(217,4,41,0.1)">
+            <svg viewBox="0 0 24 24" stroke="#D90429">
+              <rect x="3" y="11" width="18" height="11" rx="2" fill="none"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+              <circle cx="12" cy="16" r="1.5" fill="#D90429" stroke="none"/>
+            </svg>
+          </div>
+          <div class="setting-content">
+            <div class="setting-label">Ubah PIN</div>
+            <div class="setting-desc">Ganti PIN keamanan 6 digit Anda</div>
+          </div>
+        </div>
+        <div class="pin-change-wrap">
+          <input type="password" class="form-control" id="old-pin" placeholder="PIN Lama" maxlength="6" inputmode="numeric">
+          <input type="password" class="form-control" id="new-pin" placeholder="PIN Baru (6 digit)" maxlength="6" inputmode="numeric">
+          <input type="password" class="form-control" id="confirm-pin" placeholder="Konfirmasi PIN Baru" maxlength="6" inputmode="numeric">
+          <button class="btn btn-primary btn-full" onclick="changePin()" style="gap:8px">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;flex-shrink:0">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            Ubah PIN
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="card" style="margin-top:12px;border:1px solid rgba(208,0,0,0.18)">
+      <div class="settings-section-label" style="color:#D00000">
+        <svg viewBox="0 0 24 24" stroke="#D00000"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="none"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Danger Zone
+      </div>
+
+      <button class="setting-btn" onclick="resetAll()">
+        <div class="setting-icon-wrap" style="background:rgba(208,0,0,0.1)">
+          <svg viewBox="0 0 24 24" stroke="#D00000">
+            <polyline points="3 6 5 6 21 6" fill="none"/>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" fill="none"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label" style="color:#D00000">Reset Semua Data</div>
+          <div class="setting-desc">Hapus semua kendaraan, jadwal & histori</div>
+        </div>
+        <svg class="setting-arrow" viewBox="0 0 24 24" stroke="#D00000"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <button class="setting-btn" onclick="confirmLogout()">
+        <div class="setting-icon-wrap" style="background:rgba(208,0,0,0.1)">
+          <svg viewBox="0 0 24 24" stroke="#D00000">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" fill="none"/>
+            <polyline points="16 17 21 12 16 7" fill="none"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label" style="color:#D00000">Keluar Sistem</div>
+          <div class="setting-desc">Kembali ke layar PIN</div>
+        </div>
+        <svg class="setting-arrow" viewBox="0 0 24 24" stroke="#D00000"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <div style="text-align:center;padding:20px 0 8px;color:var(--text-muted);font-size:11px;line-height:1.9">
+      VMMS v1.0.0 &nbsp;•&nbsp; © Gentara Anugrah<br>
+      <span style="font-size:10px;opacity:0.7">Monitor Perawatan Kendaraan Secara Tepat Waktu</span>
+    </div>
+  </section>
+  </section>
+</main>
+
+<!-- BOTTOM NAV — Modern SVG Glow -->
+<nav class="bottom-nav">
+
+  <!-- Dashboard -->
+  <button class="nav-item active" onclick="navigate('dashboard',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 12L12 3l9 9"/>
+        <path d="M9 21V12h6v9"/>
+        <path d="M3 12v9h6M15 21v-9h6v9"/>
+      </svg>
+    </div>
+    <span class="nav-label">Dashboard</span>
+  </button>
+
+  <!-- Kendaraan -->
+  <button class="nav-item" onclick="navigate('kendaraan',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <path d="M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h1l2-3h10l2 3h1a2 2 0 012 2v6a2 2 0 01-2 2h-2"/>
+        <circle cx="7.5" cy="17.5" r="2.5"/>
+        <circle cx="16.5" cy="17.5" r="2.5"/>
+        <path d="M7.5 10h9"/>
+      </svg>
+    </div>
+    <span class="nav-label">Kendaraan</span>
+  </button>
+
+  <!-- Jadwal -->
+  <button class="nav-item" onclick="navigate('jadwal',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="18" rx="3"/>
+        <path d="M16 2v4M8 2v4M3 10h18"/>
+        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+      </svg>
+    </div>
+    <span class="nav-label">Jadwal</span>
+  </button>
+
+  <!-- Reminder -->
+  <button class="nav-item" onclick="navigate('reminder',this)" id="nav-reminder">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    </div>
+    <span class="nav-label">Reminder</span>
+    <span class="badge-dot" id="reminder-dot" style="display:none"></span>
+  </button>
+
+  <!-- Histori -->
+  <button class="nav-item" onclick="navigate('histori',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 8v4l3 3"/>
+        <path d="M3.05 11a9 9 0 101.6-4.99L1 8.5"/>
+        <path d="M1 4v4.5h4.5"/>
+      </svg>
+    </div>
+    <span class="nav-label">Histori</span>
+  </button>
+
+  <!-- Setting -->
+  <button class="nav-item" onclick="navigate('pengaturan',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+    </div>
+    <span class="nav-label">Setting</span>
+  </button>
+
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" onclick="fabClick()">＋</button>
+
+<!-- MODAL KENDARAAN -->
+<div class="modal-overlay" id="modal-kendaraan">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-kendaraan-title">Tambah Kendaraan</div>
+    <div class="form-group">
+      <label class="form-label">Plat Nomor *</label>
+      <input type="text" class="form-control" id="v-plat" placeholder="B 1234 ABC" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nama Kendaraan *</label>
+      <input type="text" class="form-control" id="v-nama" placeholder="cth: Avanza Putih">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Merk</label>
+        <input type="text" class="form-control" id="v-merk" placeholder="Toyota">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipe</label>
+        <input type="text" class="form-control" id="v-tipe" placeholder="Avanza">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tahun</label>
+        <input type="number" class="form-control" id="v-tahun" placeholder="2022" min="1990" max="2030">
+      </div>
+      <div class="form-group">
+        <label class="form-label">KM Saat Ini</label>
+        <input type="number" class="form-control" id="v-km" placeholder="45000" min="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-kendaraan')">Batal</button>
+      <button class="btn btn-primary" onclick="saveVehicle()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL JADWAL -->
+<div class="modal-overlay" id="modal-jadwal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-jadwal-title">Tambah Jadwal Perawatan</div>
+    <div class="form-group">
+      <label class="form-label">Kendaraan *</label>
+      <select class="form-control" id="j-kendaraan">
+        <option value="">-- Pilih Kendaraan --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Jenis Perawatan *</label>
+      <select class="form-control" id="j-jenis">
+        <option value="">-- Pilih Jenis --</option>
+        <option>Oli Mesin</option>
+        <option>Oli Gardan</option>
+        <option>Service Complete</option>
+        <option>Nitrogen Ban</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tanggal Terakhir *</label>
+        <input type="date" class="form-control" id="j-tgl">
+      </div>
+      <div class="form-group">
+        <label class="form-label">KM Terakhir</label>
+        <input type="number" class="form-control" id="j-km" placeholder="45000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Interval Hari</label>
+        <input type="number" class="form-control" id="j-interval-hari" placeholder="90">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Interval KM</label>
+        <input type="number" class="form-control" id="j-interval-km" placeholder="5000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Biaya (Rp)</label>
+      <input type="number" class="form-control" id="j-biaya" placeholder="150000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Catatan</label>
+      <input type="text" class="form-control" id="j-catatan" placeholder="Gunakan oli 10W-40...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-jadwal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveJadwal()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTORI -->
+<div class="modal-overlay" id="modal-histori">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Catat Perawatan Selesai</div>
+    <div class="form-group">
+      <label class="form-label">Kendaraan *</label>
+      <select class="form-control" id="h-kendaraan">
+        <option value="">-- Pilih Kendaraan --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Jenis Perawatan *</label>
+      <select class="form-control" id="h-jenis">
+        <option value="">-- Pilih Jenis --</option>
+        <option>Oli Mesin</option>
+        <option>Oli Gardan</option>
+        <option>Service Complete</option>
+        <option>Nitrogen Ban</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tanggal *</label>
+        <input type="date" class="form-control" id="h-tgl">
+      </div>
+      <div class="form-group">
+        <label class="form-label">KM Saat Ini</label>
+        <input type="number" class="form-control" id="h-km" placeholder="50000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Biaya (Rp)</label>
+      <input type="number" class="form-control" id="h-biaya" placeholder="150000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Catatan</label>
+      <input type="text" class="form-control" id="h-catatan" placeholder="Bengkel, merek oli, dll...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-histori')">Batal</button>
+      <button class="btn btn-success" onclick="saveHistory()">✅ Selesai</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MENU -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal" style="padding-bottom:30px">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Export Data</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary btn-full" onclick="exportCSV();closeModal('modal-export')">📊 Export CSV</button>
+      <button class="btn btn-secondary btn-full" onclick="exportJSON();closeModal('modal-export')">💾 Backup JSON</button>
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-export')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<!-- LOGOUT CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-logout">
+  <div class="modal" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:48px;margin-bottom:12px">🔓</div>
+    <div class="modal-title" style="text-align:center">Keluar Sistem?</div>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:24px">Apakah Anda yakin ingin keluar dari sistem? Anda harus memasukkan PIN kembali untuk mengakses aplikasi.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-logout')">Batal</button>
+      <button class="btn btn-danger" onclick="doLogout()">Ya, Keluar</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#app-wrapper -->
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+let vehicles = [];
+let schedules = [];
+let histories = [];
+let settings = { dark: false, warningDays: 14, pin: '123456' };
+let currentPage = 'dashboard';
+let jadwalFilter = 'all';
+let editVehicleId = null;
+let editJadwalId = null;
+let serviceChart = null;
+
+// ============================================================
+// PIN / AUTH SYSTEM
+// ============================================================
+let pinVisible = false;
+
+function onPinInput(input) {
+  // Only allow digits
+  input.value = input.value.replace(/\D/g,'');
+  const len = input.value.length;
+  for (let i=0;i<6;i++) {
+    const dot = document.getElementById('dot-'+i);
+    dot.classList.toggle('filled', i < len);
+  }
+  document.getElementById('pin-error').textContent = '';
+}
+
+function togglePinVisibility() {
+  pinVisible = !pinVisible;
+  const inp = document.getElementById('pin-input');
+  inp.type = pinVisible ? 'text' : 'password';
+  document.getElementById('pin-eye-btn').textContent = pinVisible ? '🙈' : '👁️';
+}
+
+function submitPin() {
+  const input = document.getElementById('pin-input');
+  const val = input.value;
+  const correctPin = settings.pin || '123456';
+
+  if (val === correctPin) {
+    // Save session
+    sessionStorage.setItem('vmms_auth', '1');
+    localStorage.setItem('vmms_auth_persist', '1');
+    showSplash();
+  } else {
+    input.classList.add('shake');
+    document.getElementById('pin-error').textContent = 'PIN yang Anda masukkan tidak valid';
+    input.value = '';
+    for (let i=0;i<6;i++) document.getElementById('dot-'+i).classList.remove('filled');
+    setTimeout(()=>{ input.classList.remove('shake'); input.focus(); }, 450);
+  }
+}
+
+function showSplash() {
+  document.getElementById('pin-screen').style.display = 'none';
+  const splash = document.getElementById('splash-screen');
+  splash.style.display = 'flex';
+  setTimeout(() => {
+    splash.style.display = 'none';
+    document.getElementById('app-wrapper').style.display = 'block';
+    bootApp();
+  }, 1800);
+}
+
+function confirmLogout() {
+  document.getElementById('modal-logout').classList.add('open');
+}
+
+function doLogout() {
+  sessionStorage.removeItem('vmms_auth');
+  localStorage.removeItem('vmms_auth_persist');
+  closeModal('modal-logout');
+  document.getElementById('app-wrapper').style.display = 'none';
+  const pinScreen = document.getElementById('pin-screen');
+  pinScreen.style.display = 'flex';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-error').textContent = '';
+  for (let i=0;i<6;i++) document.getElementById('dot-'+i).classList.remove('filled');
+  setTimeout(()=>document.getElementById('pin-input').focus(), 100);
+}
+
+function changePin() {
+  const oldPin = document.getElementById('old-pin').value;
+  const newPin = document.getElementById('new-pin').value;
+  const confirmPin = document.getElementById('confirm-pin').value;
+  const correct = settings.pin || '123456';
+
+  if (oldPin !== correct) { showToast('❌ PIN lama tidak benar!'); return; }
+  if (newPin.length < 4) { showToast('❌ PIN baru minimal 4 digit!'); return; }
+  if (newPin !== confirmPin) { showToast('❌ Konfirmasi PIN tidak cocok!'); return; }
+
+  settings.pin = newPin;
+  save();
+  ['old-pin','new-pin','confirm-pin'].forEach(id=>document.getElementById(id).value='');
+  showToast('✅ PIN berhasil diubah!');
+}
+
+function checkAuth() {
+  // Check persistent login from localStorage (survives refresh)
+  return localStorage.getItem('vmms_auth_persist') === '1';
+}
+
+const SERVICES = ['Oli Mesin','Oli Gardan','Service Complete','Nitrogen Ban'];
+const SERVICE_ICONS = {'Oli Mesin':'🛢️','Oli Gardan':'⚙️','Service Complete':'🔧','Nitrogen Ban':'🔵'};
+
+// ============================================================
+// STORAGE
+// ============================================================
+function save() {
+  localStorage.setItem('vmms_vehicles', JSON.stringify(vehicles));
+  localStorage.setItem('vmms_schedules', JSON.stringify(schedules));
+  localStorage.setItem('vmms_histories', JSON.stringify(histories));
+  localStorage.setItem('vmms_settings', JSON.stringify(settings));
+}
+
+function load() {
+  try {
+    vehicles = JSON.parse(localStorage.getItem('vmms_vehicles') || '[]');
+    schedules = JSON.parse(localStorage.getItem('vmms_schedules') || '[]');
+    histories = JSON.parse(localStorage.getItem('vmms_histories') || '[]');
+    settings = { dark: false, warningDays: 14, pin: '123456', ...JSON.parse(localStorage.getItem('vmms_settings') || '{}') };
+  } catch(e) { console.error(e); }
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (btn) btn.classList.add('active');
+  currentPage = page;
+
+  const fab = document.getElementById('fab-btn');
+  if (page === 'kendaraan' || page === 'jadwal' || page === 'histori') {
+    fab.classList.add('visible');
+  } else {
+    fab.classList.remove('visible');
+  }
+
+  refreshPage(page);
+}
+
+function fabClick() {
+  if (currentPage === 'kendaraan') openModalVehicle();
+  else if (currentPage === 'jadwal') openModalJadwal();
+  else if (currentPage === 'histori') openModalHistori();
+}
+
+function refreshPage(page) {
+  if (page === 'dashboard') renderDashboard();
+  else if (page === 'kendaraan') renderVehicles();
+  else if (page === 'jadwal') renderJadwal();
+  else if (page === 'reminder') renderReminder();
+  else if (page === 'histori') renderHistory();
+  else if (page === 'pengaturan') renderSettings();
+}
+
+// ============================================================
+// CALCULATIONS
+// ============================================================
+function calcStatus(schedule) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const last = new Date(schedule.tglTerakhir);
+  const dueDate = new Date(last);
+  dueDate.setDate(dueDate.getDate() + (parseInt(schedule.intervalHari) || 0));
+
+  const diffDays = Math.round((dueDate - today) / 86400000);
+  const kmDue = (parseInt(schedule.kmTerakhir) || 0) + (parseInt(schedule.intervalKm) || 0);
+  
+  // Find vehicle for current KM
+  const v = vehicles.find(x => x.id === schedule.kendaraanId);
+  const currentKm = parseInt(v?.km || 0);
+  const kmLeft = kmDue - currentKm;
+
+  let status = 'safe';
+  const wDays = settings.warningDays || 14;
+  if (diffDays < 0 || (schedule.intervalKm && kmLeft < 0)) status = 'overdue';
+  else if (diffDays <= wDays || (schedule.intervalKm && kmLeft < 500)) status = 'soon';
+
+  return { diffDays, kmDue, kmLeft, dueDate, status };
+}
+
+function formatKm(km) {
+  return parseInt(km || 0).toLocaleString('id-ID') + ' km';
+}
+
+function formatRp(n) {
+  return 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7 = new Date(today); in7.setDate(today.getDate() + 7);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  document.getElementById('dash-date').textContent = today.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  let todayCount=0, weekCount=0, overdueCount=0, monthCount=0;
+  const overdueSch=[], soonSch=[], monthSch=[];
+
+  schedules.forEach(s => {
+    const {diffDays, dueDate, status} = calcStatus(s);
+    const v = vehicles.find(x=>x.id===s.kendaraanId);
+    const item = {...s, diffDays, dueDate, status, vehicle:v};
+    if (status==='overdue') { overdueCount++; overdueSch.push(item); }
+    if (diffDays===0) todayCount++;
+    if (diffDays>=0 && diffDays<=7) weekCount++;
+    if (dueDate>=monthStart && dueDate<=monthEnd) { monthCount++; monthSch.push(item); }
+    if (status==='soon') soonSch.push(item);
+  });
+
+  // KPI
+  const kpiEl = document.getElementById('kpi-grid');
+  kpiEl.innerHTML = `
+    <div class="kpi-card blue">
+      <div class="kpi-icon">🚗</div>
+      <div class="kpi-value">${vehicles.length}</div>
+      <div class="kpi-label">Total Kendaraan</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">🔴</div>
+      <div class="kpi-value">${overdueCount}</div>
+      <div class="kpi-label">Terlambat</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-value">${todayCount}</div>
+      <div class="kpi-label">Jadwal Hari Ini</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">📆</div>
+      <div class="kpi-value">${weekCount}</div>
+      <div class="kpi-label">Jadwal Minggu Ini</div>
+    </div>
+    <div class="kpi-card purple wide">
+      <div class="kpi-icon">🔧</div>
+      <div class="kpi-value">${monthCount}</div>
+      <div class="kpi-label">Perawatan Bulan Ini</div>
+    </div>
+  `;
+
+  // Update reminder dot
+  const dot = document.getElementById('reminder-dot');
+  dot.style.display = overdueCount > 0 ? 'block' : 'none';
+
+  renderMiniList('dash-overdue-list', overdueSch, 'overdue');
+  renderMiniList('dash-soon-list', soonSch.slice(0,5), 'soon');
+  renderMiniList('dash-month-list', monthSch.slice(0,5), 'safe');
+}
+
+function renderMiniList(elId, items, type) {
+  const el = document.getElementById(elId);
+  if (!items.length) { el.innerHTML = `<div class="empty" style="padding:20px 0"><div class="empty-icon" style="font-size:32px">✅</div><div style="font-size:13px;color:var(--text-muted)">Tidak ada</div></div>`; return; }
+  el.innerHTML = items.map(s => {
+    const icon = SERVICE_ICONS[s.jenisPw] || '🔧';
+    const vName = s.vehicle ? `${s.vehicle.plat} - ${s.vehicle.nama}` : '-';
+    let badgeHtml = '';
+    if (s.status==='overdue') badgeHtml = `<span class="badge badge-danger">Terlambat ${Math.abs(s.diffDays)} hari</span>`;
+    else if (s.status==='soon') badgeHtml = `<span class="badge badge-warning">⚠️ ${s.diffDays} hari lagi</span>`;
+    else badgeHtml = `<span class="badge badge-success">✅ ${s.diffDays} hari lagi</span>`;
+    return `<div class="reminder-item ${s.status==='overdue'?'danger':s.status==='soon'?'warning':'success'}">
+      <div class="reminder-icon ${s.status==='overdue'?'red':s.status==='soon'?'yellow':'green'}">${icon}</div>
+      <div class="reminder-info">
+        <div class="reminder-name">${s.jenisPw}</div>
+        <div class="reminder-detail">${vName}</div>
+      </div>
+      ${badgeHtml}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// VEHICLES
+// ============================================================
+function openModalVehicle(id) {
+  editVehicleId = id || null;
+  const modal = document.getElementById('modal-kendaraan');
+  document.getElementById('modal-kendaraan-title').textContent = id ? 'Edit Kendaraan' : 'Tambah Kendaraan';
+  if (id) {
+    const v = vehicles.find(x=>x.id===id);
+    if (v) {
+      document.getElementById('v-plat').value = v.plat;
+      document.getElementById('v-nama').value = v.nama;
+      document.getElementById('v-merk').value = v.merk;
+      document.getElementById('v-tipe').value = v.tipe;
+      document.getElementById('v-tahun').value = v.tahun;
+      document.getElementById('v-km').value = v.km;
+    }
+  } else {
+    ['v-plat','v-nama','v-merk','v-tipe','v-tahun','v-km'].forEach(id => document.getElementById(id).value = '');
+  }
+  modal.classList.add('open');
+}
+
+function saveVehicle() {
+  const plat = document.getElementById('v-plat').value.trim().toUpperCase();
+  const nama = document.getElementById('v-nama').value.trim();
+  if (!plat || !nama) { showToast('⚠️ Plat dan nama wajib diisi!'); return; }
+
+  const data = {
+    id: editVehicleId || uid(),
+    plat, nama,
+    merk: document.getElementById('v-merk').value.trim(),
+    tipe: document.getElementById('v-tipe').value.trim(),
+    tahun: document.getElementById('v-tahun').value,
+    km: document.getElementById('v-km').value || 0,
+    createdAt: new Date().toISOString()
+  };
+
+  if (editVehicleId) {
+    const idx = vehicles.findIndex(x=>x.id===editVehicleId);
+    if (idx>-1) vehicles[idx] = {...vehicles[idx], ...data};
+  } else {
+    vehicles.push(data);
+  }
+
+  save();
+  closeModal('modal-kendaraan');
+  renderVehicles();
+  showToast(editVehicleId ? '✅ Kendaraan diupdate!' : '✅ Kendaraan ditambahkan!');
+  editVehicleId = null;
+}
+
+function deleteVehicle(id) {
+  if (!confirm('Hapus kendaraan ini? Jadwal terkait juga akan terhapus.')) return;
+  vehicles = vehicles.filter(x=>x.id!==id);
+  schedules = schedules.filter(x=>x.kendaraanId!==id);
+  save();
+  renderVehicles();
+  showToast('🗑️ Kendaraan dihapus');
+}
+
+function renderVehicles() {
+  const q = document.getElementById('vehicle-search')?.value.toLowerCase() || '';
+  const filtered = vehicles.filter(v =>
+    v.plat.toLowerCase().includes(q) ||
+    v.nama.toLowerCase().includes(q) ||
+    (v.merk||'').toLowerCase().includes(q)
+  );
+  const el = document.getElementById('vehicle-list');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">${vehicles.length?'Tidak ditemukan':'Belum ada kendaraan'}</div><div class="empty-sub">${vehicles.length?'Coba kata kunci lain':'Tambah kendaraan pertama Anda'}</div></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(v => {
+    const sCount = schedules.filter(s=>s.kendaraanId===v.id).length;
+    return `<div class="vehicle-card">
+      <div class="vehicle-card-header">
+        <div class="vehicle-plate">${v.plat}</div>
+        <div class="vehicle-actions">
+          <button class="btn btn-sm btn-ghost" onclick="openModalVehicle('${v.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteVehicle('${v.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="vehicle-meta">
+        <div class="vehicle-meta-item"><strong>${v.nama}</strong>Nama</div>
+        <div class="vehicle-meta-item"><strong>${v.merk||'-'} ${v.tipe||''}</strong>Merk / Tipe</div>
+        <div class="vehicle-meta-item"><strong>${v.tahun||'-'}</strong>Tahun</div>
+        <div class="vehicle-meta-item"><strong>${formatKm(v.km)}</strong>KM Saat Ini</div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <span class="badge badge-info">${sCount} jadwal</span>
+        <button class="btn btn-sm btn-primary" onclick="updateKm('${v.id}')">📍 Update KM</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateKm(id) {
+  const v = vehicles.find(x=>x.id===id);
+  if (!v) return;
+  const newKm = prompt(`KM terkini untuk ${v.plat} (sekarang: ${formatKm(v.km)}):`, v.km);
+  if (newKm === null) return;
+  const n = parseInt(newKm);
+  if (isNaN(n) || n < 0) { showToast('⚠️ KM tidak valid'); return; }
+  v.km = n;
+  save();
+  renderVehicles();
+  showToast('✅ KM diperbarui!');
+}
+
+// ============================================================
+// JADWAL PERAWATAN
+// ============================================================
+function openModalJadwal(id) {
+  editJadwalId = id || null;
+  populateVehicleSelect('j-kendaraan');
+  document.getElementById('modal-jadwal-title').textContent = id ? 'Edit Jadwal' : 'Tambah Jadwal Perawatan';
+
+  if (id) {
+    const s = schedules.find(x=>x.id===id);
+    if (s) {
+      document.getElementById('j-kendaraan').value = s.kendaraanId;
+      document.getElementById('j-jenis').value = s.jenisPw;
+      document.getElementById('j-tgl').value = s.tglTerakhir;
+      document.getElementById('j-km').value = s.kmTerakhir;
+      document.getElementById('j-interval-hari').value = s.intervalHari;
+      document.getElementById('j-interval-km').value = s.intervalKm;
+      document.getElementById('j-biaya').value = s.biaya;
+      document.getElementById('j-catatan').value = s.catatan;
+    }
+  } else {
+    ['j-kendaraan','j-jenis','j-tgl','j-km','j-interval-hari','j-interval-km','j-biaya','j-catatan'].forEach(f => {
+      const el = document.getElementById(f);
+      if (el.tagName==='SELECT') el.value=''; else el.value='';
+    });
+    // Default date to today
+    document.getElementById('j-tgl').value = new Date().toISOString().split('T')[0];
+  }
+  document.getElementById('modal-jadwal').classList.add('open');
+}
+
+function saveJadwal() {
+  const kId = document.getElementById('j-kendaraan').value;
+  const jenis = document.getElementById('j-jenis').value;
+  const tgl = document.getElementById('j-tgl').value;
+  if (!kId || !jenis || !tgl) { showToast('⚠️ Kendaraan, jenis, dan tanggal wajib diisi!'); return; }
+
+  const data = {
+    id: editJadwalId || uid(),
+    kendaraanId: kId,
+    jenisPw: jenis,
+    tglTerakhir: tgl,
+    kmTerakhir: document.getElementById('j-km').value || 0,
+    intervalHari: document.getElementById('j-interval-hari').value || 90,
+    intervalKm: document.getElementById('j-interval-km').value || 0,
+    biaya: document.getElementById('j-biaya').value || 0,
+    catatan: document.getElementById('j-catatan').value,
+    createdAt: new Date().toISOString()
+  };
+
+  if (editJadwalId) {
+    const idx = schedules.findIndex(x=>x.id===editJadwalId);
+    if (idx>-1) schedules[idx] = {...schedules[idx],...data};
+  } else {
+    schedules.push(data);
+  }
+
+  save();
+  closeModal('modal-jadwal');
+  renderJadwal();
+  showToast(editJadwalId ? '✅ Jadwal diupdate!' : '✅ Jadwal ditambahkan!');
+  editJadwalId = null;
+}
+
+function deleteJadwal(id) {
+  if (!confirm('Hapus jadwal ini?')) return;
+  schedules = schedules.filter(x=>x.id!==id);
+  save();
+  renderJadwal();
+  showToast('🗑️ Jadwal dihapus');
+}
+
+function filterJadwal(f, el) {
+  jadwalFilter = f;
+  document.querySelectorAll('#jadwal-filter-pills .stat-pill').forEach(p=>p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderJadwal();
+}
+
+function renderJadwal() {
+  const q = (document.getElementById('jadwal-search')?.value || '').toLowerCase();
+  const el = document.getElementById('jadwal-list');
+
+  let filtered = schedules.map(s => {
+    const calc = calcStatus(s);
+    const v = vehicles.find(x=>x.id===s.kendaraanId);
+    return {...s, ...calc, vehicle:v};
+  });
+
+  if (jadwalFilter === 'overdue') filtered = filtered.filter(s=>s.status==='overdue');
+  else if (jadwalFilter === 'soon') filtered = filtered.filter(s=>s.status==='soon');
+  else if (jadwalFilter === 'safe') filtered = filtered.filter(s=>s.status==='safe');
+  else if (SERVICES.includes(jadwalFilter)) filtered = filtered.filter(s=>s.jenisPw===jadwalFilter);
+
+  if (q) filtered = filtered.filter(s =>
+    (s.vehicle?.plat||'').toLowerCase().includes(q) ||
+    (s.vehicle?.nama||'').toLowerCase().includes(q) ||
+    s.jenisPw.toLowerCase().includes(q)
+  );
+
+  // Sort: overdue first
+  filtered.sort((a,b) => {
+    const ord = {overdue:0,soon:1,safe:2};
+    return ord[a.status]-ord[b.status];
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Tidak ada jadwal</div><div class="empty-sub">Tambah jadwal perawatan terlebih dahulu</div></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(s => {
+    const icon = SERVICE_ICONS[s.jenisPw] || '🔧';
+    const vName = s.vehicle ? `${s.vehicle.plat} – ${s.vehicle.nama}` : 'Kendaraan tidak ditemukan';
+    let dayLabel, kmLabel;
+    if (s.status==='overdue') {
+      dayLabel = `<span class="badge badge-danger">🔴 Terlambat ${Math.abs(s.diffDays)} hari</span>`;
+    } else if (s.status==='soon') {
+      dayLabel = `<span class="badge badge-warning">⚠️ ${s.diffDays} hari lagi</span>`;
+    } else {
+      dayLabel = `<span class="badge badge-success">✅ ${s.diffDays} hari lagi</span>`;
+    }
+    if (s.intervalKm && s.kmLeft !== undefined) {
+      if (s.kmLeft < 0) kmLabel = `<span class="badge badge-danger">KM terlewat ${Math.abs(s.kmLeft).toLocaleString()}</span>`;
+      else kmLabel = `<span class="badge badge-secondary">${s.kmLeft.toLocaleString()} km lagi</span>`;
+    }
+    const progressPct = s.intervalHari ? Math.min(100, Math.max(0, Math.round((1-(s.diffDays/s.intervalHari))*100))) : 0;
+    return `<div class="maint-card ${s.status}">
+      <div class="maint-header">
+        <div>
+          <div class="maint-title">${icon} ${s.jenisPw}</div>
+          <div class="maint-vehicle">${vName}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-ghost" onclick="openModalJadwal('${s.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteJadwal('${s.id}')">🗑️</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${dayLabel}
+        ${kmLabel||''}
+      </div>
+      <div class="maint-meta">
+        <div class="maint-meta-item">
+          <div class="maint-meta-label">Terakhir</div>
+          <div class="maint-meta-value" style="font-size:12px">${formatDate(s.tglTerakhir)}</div>
+        </div>
+        <div class="maint-meta-item">
+          <div class="maint-meta-label">Jatuh Tempo</div>
+          <div class="maint-meta-value" style="font-size:12px">${formatDate(s.dueDate)}</div>
+        </div>
+        <div class="maint-meta-item">
+          <div class="maint-meta-label">KM Terakhir</div>
+          <div class="maint-meta-value" style="font-size:12px">${formatKm(s.kmTerakhir)}</div>
+        </div>
+        <div class="maint-meta-item">
+          <div class="maint-meta-label">KM Jatuh Tempo</div>
+          <div class="maint-meta-value" style="font-size:12px">${s.intervalKm ? formatKm(s.kmDue) : '-'}</div>
+        </div>
+      </div>
+      <div class="progress"><div class="progress-bar ${s.status}" style="width:${progressPct}%"></div></div>
+      ${s.catatan ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px">📝 ${s.catatan}</div>` : ''}
+      <div style="margin-top:8px">
+        <button class="btn btn-success btn-sm" onclick="quickDone('${s.id}')">✅ Tandai Selesai</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickDone(id) {
+  const s = schedules.find(x=>x.id===id);
+  if (!s) return;
+  const v = vehicles.find(x=>x.id===s.kendaraanId);
+  // Add to history
+  histories.unshift({
+    id: uid(),
+    kendaraanId: s.kendaraanId,
+    kendaraanName: v ? `${v.plat} – ${v.nama}` : 'Tidak diketahui',
+    jenisPw: s.jenisPw,
+    tanggal: new Date().toISOString().split('T')[0],
+    km: v?.km || 0,
+    biaya: s.biaya,
+    catatan: s.catatan,
+    createdAt: new Date().toISOString()
+  });
+  // Update schedule
+  s.tglTerakhir = new Date().toISOString().split('T')[0];
+  s.kmTerakhir = v?.km || s.kmTerakhir;
+  save();
+  renderJadwal();
+  showToast('✅ Perawatan dicatat sebagai selesai!');
+}
+
+// ============================================================
+// REMINDER
+// ============================================================
+function renderReminder() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7 = new Date(today); in7.setDate(today.getDate() + 7);
+
+  const withCalc = schedules.map(s => {
+    const calc = calcStatus(s);
+    const v = vehicles.find(x=>x.id===s.kendaraanId);
+    return {...s, ...calc, vehicle:v};
+  });
+
+  const overdue = withCalc.filter(s=>s.status==='overdue');
+  const todayItems = withCalc.filter(s=>s.diffDays===0);
+  const weekItems = withCalc.filter(s=>s.diffDays>0&&s.diffDays<=7);
+
+  renderReminderGroup('reminder-overdue', overdue, 'danger');
+  renderReminderGroup('reminder-today', todayItems, 'warning');
+  renderReminderGroup('reminder-week', weekItems, 'success');
+
+  const dot = document.getElementById('reminder-dot');
+  dot.style.display = overdue.length > 0 ? 'block' : 'none';
+}
+
+function renderReminderGroup(elId, items, type) {
+  const el = document.getElementById(elId);
+  if (!items.length) {
+    el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">Tidak ada</div>`;
+    return;
+  }
+  el.innerHTML = items.map(s => {
+    const icon = SERVICE_ICONS[s.jenisPw] || '🔧';
+    const vName = s.vehicle ? `${s.vehicle.plat} – ${s.vehicle.nama}` : '-';
+    let badge;
+    if (type==='danger') badge = `<span class="badge badge-danger">${Math.abs(s.diffDays)} hari</span>`;
+    else if (type==='warning') badge = `<span class="badge badge-warning">Hari ini</span>`;
+    else badge = `<span class="badge badge-success">${s.diffDays} hari lagi</span>`;
+    return `<div class="reminder-item ${type==='danger'?'danger':type==='warning'?'warning':'success'}">
+      <div class="reminder-icon ${type==='danger'?'red':type==='warning'?'yellow':'green'}">${icon}</div>
+      <div class="reminder-info">
+        <div class="reminder-name">${s.jenisPw}</div>
+        <div class="reminder-detail">${vName} • Jatuh tempo: ${formatDate(s.dueDate)}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function openModalHistori() {
+  populateVehicleSelect('h-kendaraan');
+  document.getElementById('h-tgl').value = new Date().toISOString().split('T')[0];
+  ['h-kendaraan','h-jenis','h-km','h-biaya','h-catatan'].forEach(f => {
+    const el = document.getElementById(f);
+    if (el.tagName==='SELECT') el.value=''; else if (f!=='h-tgl') el.value='';
+  });
+  document.getElementById('modal-histori').classList.add('open');
+}
+
+function saveHistory() {
+  const kId = document.getElementById('h-kendaraan').value;
+  const jenis = document.getElementById('h-jenis').value;
+  const tgl = document.getElementById('h-tgl').value;
+  if (!kId || !jenis || !tgl) { showToast('⚠️ Kendaraan, jenis, dan tanggal wajib diisi!'); return; }
+
+  const v = vehicles.find(x=>x.id===kId);
+  const km = document.getElementById('h-km').value;
+
+  histories.unshift({
+    id: uid(),
+    kendaraanId: kId,
+    kendaraanName: v ? `${v.plat} – ${v.nama}` : kId,
+    jenisPw: jenis,
+    tanggal: tgl,
+    km: km || 0,
+    biaya: document.getElementById('h-biaya').value || 0,
+    catatan: document.getElementById('h-catatan').value,
+    createdAt: new Date().toISOString()
+  });
+
+  // Update vehicle km
+  if (km && v) { v.km = parseInt(km); }
+
+  // Update related schedule
+  const relSch = schedules.find(s=>s.kendaraanId===kId && s.jenisPw===jenis);
+  if (relSch) {
+    relSch.tglTerakhir = tgl;
+    relSch.kmTerakhir = km || relSch.kmTerakhir;
+  }
+
+  save();
+  closeModal('modal-histori');
+  renderHistory();
+  showToast('✅ Histori disimpan!');
+}
+
+function deleteHistory(id) {
+  if (!confirm('Hapus histori ini?')) return;
+  histories = histories.filter(x=>x.id!==id);
+  save();
+  renderHistory();
+  showToast('🗑️ Histori dihapus');
+}
+
+function renderHistory() {
+  const q = (document.getElementById('history-search')?.value || '').toLowerCase();
+  const filterType = document.getElementById('history-filter')?.value || '';
+
+  let filtered = histories.filter(h => {
+    const matchQ = !q || (h.kendaraanName||'').toLowerCase().includes(q) || (h.jenisPw||'').toLowerCase().includes(q) || (h.catatan||'').toLowerCase().includes(q);
+    const matchType = !filterType || h.jenisPw === filterType;
+    return matchQ && matchType;
+  });
+
+  // Analysis
+  const now = new Date();
+  const yearCost = histories.filter(h=>new Date(h.tanggal).getFullYear()===now.getFullYear()).reduce((a,h)=>a+parseInt(h.biaya||0),0);
+  const monthCost = histories.filter(h=>{const d=new Date(h.tanggal);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()}).reduce((a,h)=>a+parseInt(h.biaya||0),0);
+  document.getElementById('cost-year').textContent = formatRp(yearCost);
+  document.getElementById('cost-month').textContent = formatRp(monthCost);
+
+  // Top service
+  const counts = {};
+  histories.forEach(h=>{ counts[h.jenisPw]=(counts[h.jenisPw]||0)+1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('top-service').textContent = top.length ? `${SERVICE_ICONS[top[0][0]]||'🔧'} ${top[0][0]} (${top[0][1]}x)` : 'Belum ada data';
+
+  // Chart
+  renderServiceChart(counts);
+
+  const el = document.getElementById('history-list');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📜</div><div class="empty-title">Belum ada histori</div><div class="empty-sub">Catat perawatan yang sudah selesai</div></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(h => {
+    const icon = SERVICE_ICONS[h.jenisPw] || '🔧';
+    return `<div class="history-item">
+      <div class="history-header">
+        <div class="history-title">${icon} ${h.jenisPw}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="history-date">${formatDate(h.tanggal)}</span>
+          <button class="btn btn-sm btn-danger" onclick="deleteHistory('${h.id}')">🗑️</button>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">${h.kendaraanName}</div>
+      <div class="history-meta">
+        ${h.km ? `<span class="badge badge-info">📍 ${formatKm(h.km)}</span>` : ''}
+        ${h.biaya ? `<span class="badge badge-success">💰 ${formatRp(h.biaya)}</span>` : ''}
+        ${h.catatan ? `<span class="badge badge-secondary">📝 ${h.catatan}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderServiceChart(counts) {
+  const ctx = document.getElementById('chart-service').getContext('2d');
+  if (serviceChart) serviceChart.destroy();
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+  if (!labels.length) return;
+  const colors = ['#D90429','#FFB703','#06D6A0','#3b82f6'];
+  serviceChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors.slice(0,labels.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: getComputedStyle(document.body).getPropertyValue('--text'), font: { family: 'Outfit', size: 12 }, padding: 16 }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderSettings() {
+  const toggleBtn = document.getElementById('toggle-dark');
+  if (toggleBtn) toggleBtn.classList.toggle('on', settings.dark);
+  const wdEl = document.getElementById('warning-days');
+  if (wdEl) wdEl.value = settings.warningDays || 14;
+}
+
+function saveSettings() {
+  settings.warningDays = parseInt(document.getElementById('warning-days').value);
+  save();
+  showToast('✅ Pengaturan disimpan');
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function toggleDark() {
+  settings.dark = !settings.dark;
+  save();
+
+  // Animate logo
+  const logo = document.getElementById('topbar-logo');
+  if (logo) { logo.classList.remove('pulse'); void logo.offsetWidth; logo.classList.add('pulse'); }
+
+  // Spin the toggle icon
+  const inner = document.getElementById('dark-toggle-inner');
+  if (inner) { inner.classList.remove('spinning'); void inner.offsetWidth; inner.classList.add('spinning'); }
+
+  applyDark();
+  renderSettings();
+}
+
+function applyDark() {
+  const isDark = settings.dark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+
+  // Swap sun/moon icon visibility
+  const sun = document.getElementById('icon-sun');
+  const moon = document.getElementById('icon-moon');
+  if (sun && moon) {
+    sun.style.opacity = isDark ? '1' : '0';
+    moon.style.opacity = isDark ? '0' : '1';
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function populateVehicleSelect(selectId) {
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = '<option value="">-- Pilih Kendaraan --</option>' +
+    vehicles.map(v => `<option value="${v.id}">${v.plat} – ${v.nama}</option>`).join('');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+
+function showExportMenu() {
+  document.getElementById('modal-export').classList.add('open');
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function exportCSV() {
+  const rows = [['Tanggal','Kendaraan','Jenis Perawatan','KM','Biaya','Catatan']];
+  histories.forEach(h => {
+    rows.push([h.tanggal, h.kendaraanName, h.jenisPw, h.km, h.biaya, h.catatan||'']);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  download('vmms-histori.csv', csv, 'text/csv');
+  showToast('✅ CSV berhasil diexport');
+}
+
+function exportJSON() {
+  const data = JSON.stringify({ vehicles, schedules, histories, settings, exportedAt: new Date().toISOString() }, null, 2);
+  download('vmms-backup.json', data, 'application/json');
+  showToast('✅ Backup JSON berhasil');
+}
+
+function importJSON() {
+  document.getElementById('import-file').click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!confirm('Ini akan MENGGANTI semua data. Lanjutkan?')) return;
+      if (data.vehicles) vehicles = data.vehicles;
+      if (data.schedules) schedules = data.schedules;
+      if (data.histories) histories = data.histories;
+      if (data.settings) settings = data.settings;
+      save();
+      applyDark();
+      refreshPage(currentPage);
+      showToast('✅ Data berhasil diimport!');
+    } catch(err) {
+      showToast('❌ File tidak valid!');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function download(filename, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename;
+  a.click();
+}
+
+function resetAll() {
+  if (!confirm('HAPUS SEMUA DATA? Tindakan ini tidak bisa dibatalkan!')) return;
+  if (!confirm('Yakin benar? Semua kendaraan, jadwal, dan histori akan dihapus!')) return;
+  vehicles = []; schedules = []; histories = [];
+  save();
+  renderDashboard();
+  renderVehicles();
+  renderJadwal();
+  renderHistory();
+  showToast('🗑️ Semua data dihapus');
+}
+
+// ============================================================
+// SAMPLE DATA
+// ============================================================
+function loadSampleData() {
+  if (vehicles.length > 0) return; // Don't overwrite existing data
+
+  vehicles = [
+    { id:'v1', plat:'B 1234 ABC', nama:'Avanza Putih', merk:'Toyota', tipe:'Avanza', tahun:'2021', km:'48500', createdAt: new Date().toISOString() },
+    { id:'v2', plat:'D 5678 XYZ', nama:'Innova Hitam', merk:'Toyota', tipe:'Innova', tahun:'2020', km:'72000', createdAt: new Date().toISOString() },
+  ];
+
+  const today = new Date();
+  const past90 = new Date(today); past90.setDate(today.getDate()-90);
+  const past30 = new Date(today); past30.setDate(today.getDate()-30);
+  const past10 = new Date(today); past10.setDate(today.getDate()-10);
+  const past200 = new Date(today); past200.setDate(today.getDate()-200);
+
+  schedules = [
+    { id:'s1', kendaraanId:'v1', jenisPw:'Oli Mesin', tglTerakhir: past90.toISOString().split('T')[0], kmTerakhir:'43500', intervalHari:'90', intervalKm:'5000', biaya:'150000', catatan:'Gunakan oli 10W-40', createdAt:new Date().toISOString() },
+    { id:'s2', kendaraanId:'v1', jenisPw:'Service Complete', tglTerakhir: past30.toISOString().split('T')[0], kmTerakhir:'47000', intervalHari:'180', intervalKm:'10000', biaya:'500000', catatan:'', createdAt:new Date().toISOString() },
+    { id:'s3', kendaraanId:'v2', jenisPw:'Oli Mesin', tglTerakhir: past10.toISOString().split('T')[0], kmTerakhir:'70000', intervalHari:'60', intervalKm:'5000', biaya:'200000', catatan:'Oli Pertamina Fastron', createdAt:new Date().toISOString() },
+    { id:'s4', kendaraanId:'v2', jenisPw:'Nitrogen Ban', tglTerakhir: past200.toISOString().split('T')[0], kmTerakhir:'60000', intervalHari:'90', intervalKm:'0', biaya:'40000', catatan:'', createdAt:new Date().toISOString() },
+  ];
+
+  const p3m = new Date(today); p3m.setDate(today.getDate()-95);
+  const p4m = new Date(today); p4m.setDate(today.getDate()-40);
+  histories = [
+    { id:'h1', kendaraanId:'v1', kendaraanName:'B 1234 ABC – Avanza Putih', jenisPw:'Oli Mesin', tanggal: p3m.toISOString().split('T')[0], km:'38000', biaya:'150000', catatan:'Shell Helix HX7', createdAt:new Date().toISOString() },
+    { id:'h2', kendaraanId:'v2', kendaraanName:'D 5678 XYZ – Innova Hitam', jenisPw:'Service Complete', tanggal: p4m.toISOString().split('T')[0], km:'65000', biaya:'750000', catatan:'Bengkel Toyota Resmi', createdAt:new Date().toISOString() },
+    { id:'h3', kendaraanId:'v1', kendaraanName:'B 1234 ABC – Avanza Putih', jenisPw:'Nitrogen Ban', tanggal: p4m.toISOString().split('T')[0], km:'46000', biaya:'40000', catatan:'', createdAt:new Date().toISOString() },
+  ];
+
+  save();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function bootApp() {
+  applyDark();
+  renderDashboard();
+  renderSettings();
+}
+
+function init() {
+  load();
+  loadSampleData();
+  applyDark();
+
+  if (checkAuth()) {
+    // Already logged in — skip PIN screen
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app-wrapper').style.display = 'block';
+    bootApp();
+  } else {
+    // Show PIN screen
+    document.getElementById('pin-screen').style.display = 'flex';
+    document.getElementById('app-wrapper').style.display = 'none';
+    setTimeout(()=>document.getElementById('pin-input').focus(), 300);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
