@@ -322,7 +322,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .kpi-card.yellow::before{background:var(--warning)}
 .kpi-card.red::before{background:var(--danger)}
 .kpi-card.purple::before{background:#8b5cf6}
-.kpi-icon{font-size:28px;margin-bottom:8px}
+.kpi-icon{width:36px;height:36px;margin-bottom:10px;display:flex;align-items:center;justify-content:center}
+.kpi-icon svg{width:28px;height:28px;flex-shrink:0}
 .kpi-value{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;line-height:1;color:var(--text)}
 .kpi-label{font-size:11px;font-weight:500;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
 .kpi-card.wide{grid-column:span 2}
@@ -1674,27 +1675,55 @@ function renderDashboard() {
   const kpiEl = document.getElementById('kpi-grid');
   kpiEl.innerHTML = `
     <div class="kpi-card blue">
-      <div class="kpi-icon">🚗</div>
+      <div class="kpi-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h1l2-3h10l2 3h1a2 2 0 012 2v6a2 2 0 01-2 2h-2"/>
+          <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
+          <path d="M7.5 10.5h9"/>
+        </svg>
+      </div>
       <div class="kpi-value">${vehicles.length}</div>
       <div class="kpi-label">Total Kendaraan</div>
     </div>
     <div class="kpi-card red">
-      <div class="kpi-icon">🔴</div>
+      <div class="kpi-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D90429" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/>
+        </svg>
+      </div>
       <div class="kpi-value">${overdueCount}</div>
       <div class="kpi-label">Terlambat</div>
     </div>
     <div class="kpi-card yellow">
-      <div class="kpi-icon">📅</div>
+      <div class="kpi-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB703" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <path d="M8 14h.01M12 14h.01M16 14h.01"/>
+        </svg>
+      </div>
       <div class="kpi-value">${todayCount}</div>
       <div class="kpi-label">Jadwal Hari Ini</div>
     </div>
     <div class="kpi-card green">
-      <div class="kpi-icon">📆</div>
+      <div class="kpi-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#06D6A0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+        </svg>
+      </div>
       <div class="kpi-value">${weekCount}</div>
       <div class="kpi-label">Jadwal Minggu Ini</div>
     </div>
     <div class="kpi-card purple wide">
-      <div class="kpi-icon">🔧</div>
+      <div class="kpi-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
       <div class="kpi-value">${monthCount}</div>
       <div class="kpi-label">Perawatan Bulan Ini</div>
     </div>
@@ -2355,11 +2384,14 @@ function resetAll() {
   if (!confirm('HAPUS SEMUA DATA? Tindakan ini tidak bisa dibatalkan!')) return;
   if (!confirm('Yakin benar? Semua kendaraan, jadwal, dan histori akan dihapus!')) return;
   vehicles = []; schedules = []; histories = [];
+  // Mark that user has explicitly reset — never auto-load sample again
+  localStorage.setItem('vmms_initialized', '1');
   save();
   renderDashboard();
   renderVehicles();
   renderJadwal();
   renderHistory();
+  closeModal('modal-logout');
   showToast('🗑️ Semua data dihapus');
 }
 
@@ -2367,7 +2399,9 @@ function resetAll() {
 // SAMPLE DATA
 // ============================================================
 function loadSampleData() {
-  if (vehicles.length > 0) return; // Don't overwrite existing data
+  // Only load sample data once — if user has reset, never reload
+  if (localStorage.getItem('vmms_initialized') === '1') return;
+  if (vehicles.length > 0) return;
 
   vehicles = [
     { id:'v1', plat:'B 1234 ABC', nama:'Avanza Putih', merk:'Toyota', tipe:'Avanza', tahun:'2021', km:'48500', createdAt: new Date().toISOString() },
@@ -2395,6 +2429,8 @@ function loadSampleData() {
     { id:'h3', kendaraanId:'v1', kendaraanName:'B 1234 ABC – Avanza Putih', jenisPw:'Nitrogen Ban', tanggal: p4m.toISOString().split('T')[0], km:'46000', biaya:'40000', catatan:'', createdAt:new Date().toISOString() },
   ];
 
+  // Mark initialized so sample never reloads
+  localStorage.setItem('vmms_initialized', '1');
   save();
 }
 
