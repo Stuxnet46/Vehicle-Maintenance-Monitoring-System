@@ -924,15 +924,16 @@ tr:hover td{background:rgba(217,4,41,0.03)}
       <div class="page-title">Jadwal Perawatan</div>
       <div class="page-sub">Monitor status perawatan</div>
     </div>
-    <div class="stat-pills" id="jadwal-filter-pills">
+    <div class="stat-pills" id="jadwal-filter-pills" style="grid-template-columns:repeat(4,1fr)">
       <div class="stat-pill active" onclick="filterJadwal('all',this)">Semua</div>
       <div class="stat-pill" onclick="filterJadwal('overdue',this)">🔴 Terlambat</div>
       <div class="stat-pill" onclick="filterJadwal('soon',this)">⚠️ Mendekati</div>
       <div class="stat-pill" onclick="filterJadwal('safe',this)">✅ Aman</div>
-      <div class="stat-pill" onclick="filterJadwal('Oli Mesin',this)">🛢️ Oli Mesin</div>
-      <div class="stat-pill" onclick="filterJadwal('Oli Gardan',this)">⚙️ Oli Gardan</div>
-      <div class="stat-pill" onclick="filterJadwal('Service Complete',this)">🔧 Service</div>
-      <div class="stat-pill" onclick="filterJadwal('Nitrogen Ban',this)">🔵 Nitrogen</div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <select class="form-control" id="jadwal-category-filter" onchange="filterJadwalByCategory()">
+        <option value="">— Semua Kategori Komponen —</option>
+      </select>
     </div>
     <div class="search-bar">
       <div class="search-wrap">
@@ -995,10 +996,6 @@ tr:hover td{background:rgba(217,4,41,0.03)}
       </div>
       <select class="form-control" id="history-filter" onchange="renderHistory()">
         <option value="">— Semua Jenis Perawatan —</option>
-        <option>Oli Mesin</option>
-        <option>Oli Gardan</option>
-        <option>Service Complete</option>
-        <option>Nitrogen Ban</option>
       </select>
     </div>
     <div id="history-list"></div>
@@ -1319,12 +1316,8 @@ tr:hover td{background:rgba(217,4,41,0.03)}
     </div>
     <div class="form-group">
       <label class="form-label">Jenis Perawatan *</label>
-      <select class="form-control" id="j-jenis">
-        <option value="">-- Pilih Jenis --</option>
-        <option>Oli Mesin</option>
-        <option>Oli Gardan</option>
-        <option>Service Complete</option>
-        <option>Nitrogen Ban</option>
+      <select class="form-control service-select" id="j-jenis">
+        <option value="">— Pilih Jenis Perawatan —</option>
       </select>
     </div>
     <div class="form-row">
@@ -1375,12 +1368,8 @@ tr:hover td{background:rgba(217,4,41,0.03)}
     </div>
     <div class="form-group">
       <label class="form-label">Jenis Perawatan *</label>
-      <select class="form-control" id="h-jenis">
-        <option value="">-- Pilih Jenis --</option>
-        <option>Oli Mesin</option>
-        <option>Oli Gardan</option>
-        <option>Service Complete</option>
-        <option>Nitrogen Ban</option>
+      <select class="form-control service-select" id="h-jenis">
+        <option value="">— Pilih Jenis Perawatan —</option>
       </select>
     </div>
     <div class="form-row">
@@ -1548,8 +1537,114 @@ function checkAuth() {
   return localStorage.getItem('vmms_auth_persist') === '1';
 }
 
-const SERVICES = ['Oli Mesin','Oli Gardan','Service Complete','Nitrogen Ban'];
-const SERVICE_ICONS = {'Oli Mesin':'🛢️','Oli Gardan':'⚙️','Service Complete':'🔧','Nitrogen Ban':'🔵'};
+// ============================================================
+// SERVICE CATEGORIES — Full Vehicle Maintenance Catalog
+// ============================================================
+const SERVICE_CATEGORIES = {
+  'Mesin': {
+    icon:'🛢️', color:'#D90429',
+    items:['Oli Mesin','Filter Oli','Paking Baut Oli','Tune Up Mesin','Pembersihan Ruang Bakar']
+  },
+  'Sistem Bahan Bakar': {
+    icon:'⛽', color:'#FFB703',
+    items:['Filter Udara','Pembersihan Throttle Body','Pembersihan Injektor','Filter Bensin','Fuel Pump']
+  },
+  'Sistem Pengapian': {
+    icon:'⚡', color:'#FFD60A',
+    items:['Busi','Tutup Busi','Koil Pengapian']
+  },
+  'Sistem CVT / Transmisi': {
+    icon:'⚙️', color:'#3b82f6',
+    items:['Oli Gardan','V-Belt CVT','Roller CVT','Slide Piece CVT','Kampas Ganda','Mangkok Kopling','Per CVT','Rumah Roller']
+  },
+  'Sistem Pengereman': {
+    icon:'🛑', color:'#D00000',
+    items:['Kampas Rem Depan','Kampas Rem Belakang','Minyak Rem','Cakram Rem','Tromol Rem','Selang Rem']
+  },
+  'Kemudi & Suspensi': {
+    icon:'🔧', color:'#8b5cf6',
+    items:['Shockbreaker Depan','Shockbreaker Belakang','Seal Shock Depan','Laher Komstir','Bushing Swing Arm']
+  },
+  'Roda & Ban': {
+    icon:'🔵', color:'#06D6A0',
+    items:['Ban Depan','Ban Belakang','Bearing Roda Depan','Bearing Roda Belakang','Pentil Ban','Nitrogen Ban']
+  },
+  'Kelistrikan': {
+    icon:'🔌', color:'#f59e0b',
+    items:['Aki','Sekring','Lampu Utama','Lampu Sein','Lampu Rem','Lampu Speedometer','Klakson']
+  },
+  'Kabel & Kontrol': {
+    icon:'🎛️', color:'#64748b',
+    items:['Kabel Gas','Kabel Rem','Kabel Speedometer']
+  },
+  'Body & Kaki-Kaki': {
+    icon:'🏍️', color:'#2B2D42',
+    items:['Standar Tengah','Standar Samping','Karet Footstep','Karet Dudukan Mesin','Baut-Baut Kritis']
+  },
+  'Service Reminder': {
+    icon:'🗒️', color:'#06D6A0',
+    items:['Servis CVT','Tune Up','Pembersihan Injektor','Pembersihan Throttle Body','Ganti Minyak Rem','Pemeriksaan Kelistrikan','Pemeriksaan Kaki-Kaki','Pemeriksaan Sistem Rem','Pemeriksaan Sistem Kemudi','Pemeriksaan Tekanan Ban','Pemeriksaan Kebocoran Oli','Pemeriksaan Kebocoran Shockbreaker']
+  }
+};
+
+// Flat lookup: item name -> {category, icon, color}
+const SERVICE_ITEM_MAP = {};
+Object.entries(SERVICE_CATEGORIES).forEach(([cat, data]) => {
+  data.items.forEach(item => {
+    SERVICE_ITEM_MAP[item] = { category: cat, icon: data.icon, color: data.color };
+  });
+});
+
+// Flat list of all service names (for search/legacy compatibility)
+const SERVICES = Object.values(SERVICE_CATEGORIES).flatMap(c => c.items);
+
+// Legacy-compatible icon lookup (used throughout codebase)
+const SERVICE_ICONS = {};
+Object.entries(SERVICE_ITEM_MAP).forEach(([item, info]) => { SERVICE_ICONS[item] = info.icon; });
+
+function getServiceIcon(name) { return SERVICE_ITEM_MAP[name]?.icon || '🔧'; }
+function getServiceColor(name) { return SERVICE_ITEM_MAP[name]?.color || '#6b7280'; }
+function getServiceCategory(name) { return SERVICE_ITEM_MAP[name]?.category || '-'; }
+
+// Build grouped <option> HTML for a <select> — used by all service dropdowns
+function buildServiceOptionsHTML(selectedValue) {
+  let html = '<option value="">— Pilih Jenis Perawatan —</option>';
+  Object.entries(SERVICE_CATEGORIES).forEach(([cat, data]) => {
+    html += `<optgroup label="${data.icon} ${cat}">`;
+    data.items.forEach(item => {
+      const sel = item === selectedValue ? 'selected' : '';
+      html += `<option value="${item}" ${sel}>${item}</option>`;
+    });
+    html += `</optgroup>`;
+  });
+  return html;
+}
+
+// Populate all jenis-perawatan selects with grouped options
+function populateServiceSelects() {
+  document.querySelectorAll('.service-select').forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = buildServiceOptionsHTML(current);
+  });
+}
+
+// Populate the history filter dropdown (keeps "Semua" as first option)
+function populateHistoryFilter() {
+  const sel = document.getElementById('history-filter');
+  if (!sel || sel.dataset.populated === '1') return;
+  const current = sel.value;
+  let html = '<option value="">— Semua Jenis Perawatan —</option>';
+  Object.entries(SERVICE_CATEGORIES).forEach(([cat, data]) => {
+    html += `<optgroup label="${data.icon} ${cat}">`;
+    data.items.forEach(item => {
+      html += `<option value="${item}">${item}</option>`;
+    });
+    html += `</optgroup>`;
+  });
+  sel.innerHTML = html;
+  sel.value = current;
+  sel.dataset.populated = '1';
+}
 
 // ============================================================
 // STORAGE
@@ -1875,6 +1970,7 @@ function updateKm(id) {
 function openModalJadwal(id) {
   editJadwalId = id || null;
   populateVehicleSelect('j-kendaraan');
+  document.getElementById('j-jenis').innerHTML = buildServiceOptionsHTML();
   document.getElementById('modal-jadwal-title').textContent = id ? 'Edit Jadwal' : 'Tambah Jadwal Perawatan';
 
   if (id) {
@@ -1941,6 +2037,8 @@ function deleteJadwal(id) {
   showToast('🗑️ Jadwal dihapus');
 }
 
+let jadwalCategoryFilter = '';
+
 function filterJadwal(f, el) {
   jadwalFilter = f;
   document.querySelectorAll('#jadwal-filter-pills .stat-pill').forEach(p=>p.classList.remove('active'));
@@ -1948,7 +2046,24 @@ function filterJadwal(f, el) {
   renderJadwal();
 }
 
+function filterJadwalByCategory() {
+  jadwalCategoryFilter = document.getElementById('jadwal-category-filter')?.value || '';
+  renderJadwal();
+}
+
+function populateJadwalCategoryFilter() {
+  const sel = document.getElementById('jadwal-category-filter');
+  if (!sel || sel.dataset.populated === '1') return;
+  let html = '<option value="">— Semua Kategori Komponen —</option>';
+  Object.entries(SERVICE_CATEGORIES).forEach(([cat, data]) => {
+    html += `<option value="${cat}">${data.icon} ${cat}</option>`;
+  });
+  sel.innerHTML = html;
+  sel.dataset.populated = '1';
+}
+
 function renderJadwal() {
+  populateJadwalCategoryFilter();
   const q = (document.getElementById('jadwal-search')?.value || '').toLowerCase();
   const el = document.getElementById('jadwal-list');
 
@@ -1961,7 +2076,8 @@ function renderJadwal() {
   if (jadwalFilter === 'overdue') filtered = filtered.filter(s=>s.status==='overdue');
   else if (jadwalFilter === 'soon') filtered = filtered.filter(s=>s.status==='soon');
   else if (jadwalFilter === 'safe') filtered = filtered.filter(s=>s.status==='safe');
-  else if (SERVICES.includes(jadwalFilter)) filtered = filtered.filter(s=>s.jenisPw===jadwalFilter);
+
+  if (jadwalCategoryFilter) filtered = filtered.filter(s=>getServiceCategory(s.jenisPw)===jadwalCategoryFilter);
 
   if (q) filtered = filtered.filter(s =>
     (s.vehicle?.plat||'').toLowerCase().includes(q) ||
@@ -1996,11 +2112,12 @@ function renderJadwal() {
       else kmLabel = `<span class="badge badge-secondary">${s.kmLeft.toLocaleString()} km lagi</span>`;
     }
     const progressPct = s.intervalHari ? Math.min(100, Math.max(0, Math.round((1-(s.diffDays/s.intervalHari))*100))) : 0;
+    const catName = getServiceCategory(s.jenisPw);
     return `<div class="maint-card ${s.status}">
       <div class="maint-header">
         <div>
           <div class="maint-title">${icon} ${s.jenisPw}</div>
-          <div class="maint-vehicle">${vName}</div>
+          <div class="maint-vehicle">${vName} <span style="opacity:0.6">• ${catName}</span></div>
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-sm btn-ghost" onclick="openModalJadwal('${s.id}')">✏️</button>
@@ -2116,6 +2233,7 @@ function renderReminderGroup(elId, items, type) {
 // ============================================================
 function openModalHistori() {
   populateVehicleSelect('h-kendaraan');
+  document.getElementById('h-jenis').innerHTML = buildServiceOptionsHTML();
   document.getElementById('h-tgl').value = new Date().toISOString().split('T')[0];
   ['h-kendaraan','h-jenis','h-km','h-biaya','h-catatan'].forEach(f => {
     const el = document.getElementById(f);
@@ -2170,6 +2288,7 @@ function deleteHistory(id) {
 }
 
 function renderHistory() {
+  populateHistoryFilter();
   const q = (document.getElementById('history-search')?.value || '').toLowerCase();
   const filterType = document.getElementById('history-filter')?.value || '';
 
@@ -2416,7 +2535,7 @@ function loadSampleData() {
 
   schedules = [
     { id:'s1', kendaraanId:'v1', jenisPw:'Oli Mesin', tglTerakhir: past90.toISOString().split('T')[0], kmTerakhir:'43500', intervalHari:'90', intervalKm:'5000', biaya:'150000', catatan:'Gunakan oli 10W-40', createdAt:new Date().toISOString() },
-    { id:'s2', kendaraanId:'v1', jenisPw:'Service Complete', tglTerakhir: past30.toISOString().split('T')[0], kmTerakhir:'47000', intervalHari:'180', intervalKm:'10000', biaya:'500000', catatan:'', createdAt:new Date().toISOString() },
+    { id:'s2', kendaraanId:'v1', jenisPw:'Tune Up', tglTerakhir: past30.toISOString().split('T')[0], kmTerakhir:'47000', intervalHari:'180', intervalKm:'10000', biaya:'500000', catatan:'', createdAt:new Date().toISOString() },
     { id:'s3', kendaraanId:'v2', jenisPw:'Oli Mesin', tglTerakhir: past10.toISOString().split('T')[0], kmTerakhir:'70000', intervalHari:'60', intervalKm:'5000', biaya:'200000', catatan:'Oli Pertamina Fastron', createdAt:new Date().toISOString() },
     { id:'s4', kendaraanId:'v2', jenisPw:'Nitrogen Ban', tglTerakhir: past200.toISOString().split('T')[0], kmTerakhir:'60000', intervalHari:'90', intervalKm:'0', biaya:'40000', catatan:'', createdAt:new Date().toISOString() },
   ];
@@ -2425,7 +2544,7 @@ function loadSampleData() {
   const p4m = new Date(today); p4m.setDate(today.getDate()-40);
   histories = [
     { id:'h1', kendaraanId:'v1', kendaraanName:'B 1234 ABC – Avanza Putih', jenisPw:'Oli Mesin', tanggal: p3m.toISOString().split('T')[0], km:'38000', biaya:'150000', catatan:'Shell Helix HX7', createdAt:new Date().toISOString() },
-    { id:'h2', kendaraanId:'v2', kendaraanName:'D 5678 XYZ – Innova Hitam', jenisPw:'Service Complete', tanggal: p4m.toISOString().split('T')[0], km:'65000', biaya:'750000', catatan:'Bengkel Toyota Resmi', createdAt:new Date().toISOString() },
+    { id:'h2', kendaraanId:'v2', kendaraanName:'D 5678 XYZ – Innova Hitam', jenisPw:'Tune Up', tanggal: p4m.toISOString().split('T')[0], km:'65000', biaya:'750000', catatan:'Bengkel Toyota Resmi', createdAt:new Date().toISOString() },
     { id:'h3', kendaraanId:'v1', kendaraanName:'B 1234 ABC – Avanza Putih', jenisPw:'Nitrogen Ban', tanggal: p4m.toISOString().split('T')[0], km:'46000', biaya:'40000', catatan:'', createdAt:new Date().toISOString() },
   ];
 
